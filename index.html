@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chrome Smith - 3D Asset Studio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --accent: #ff444f; --accent-dark: #e53642; --accent-soft: #fff2f2;
+      --base: #f4f4f1; --surface: #fcfcfa; --surface-2: #f7f7f4;
+      --ink: #20201e; --muted: #7b7b74; --faint: #a9a9a1; --line: #e6e5df;
+      --shadow: 0 18px 45px rgba(40, 38, 34, .06);
+    }
+    body.dark {
+      --base: #161614; --surface: #20201e; --surface-2: #282825;
+      --ink: #f5f4ef; --muted: #aaa99f; --faint: #77766f; --line: #373733;
+      --accent-soft: #3c2226; --shadow: 0 18px 45px rgba(0, 0, 0, .18);
+    }
+    body {
+      min-height: 100vh; background: var(--base); color: var(--ink);
+      font-family: Inter, sans-serif; transition: background .2s, color .2s;
+    }
+    button, textarea { font: inherit; }
+    button { cursor: pointer; }
+    .app { min-height: 100vh; display: grid; grid-template-columns: 224px 1fr; }
+    .sidebar {
+      position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column;
+      padding: 20px 14px 16px; background: var(--surface); border-right: 1px solid var(--line);
+    }
+    .brand { display: flex; align-items: center; gap: 10px; padding: 0 7px; margin-bottom: 27px; }
+    .brand-mark {
+      width: 35px; height: 35px; display: grid; place-items: center; color: #fff;
+      border-radius: 12px; background: linear-gradient(135deg, #ff7079, #ff444f 70%);
+      box-shadow: 0 7px 16px rgba(255, 68, 79, .25); transform: rotate(-5deg);
+    }
+    .brand-mark i { font-size: 21px; transform: rotate(5deg); }
+    .brand-name, h1 { font-family: "Space Grotesk", sans-serif; }
+    .brand-name { font-size: 14px; font-weight: 700; letter-spacing: -.25px; }
+    .brand-sub { color: var(--muted); font-size: 8px; font-weight: 700; letter-spacing: 1.2px; margin-top: 1px; text-transform: uppercase; }
+    .nav-label { padding: 0 10px; margin: 15px 0 6px; color: var(--faint); font-size: 9px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
+    .nav-item {
+      display: flex; align-items: center; gap: 9px; width: 100%; padding: 9px 10px;
+      color: var(--muted); border: 0; border-radius: 10px; background: transparent;
+      font-size: 12px; font-weight: 600; text-align: left; transition: .16s;
+    }
+    .nav-item i { font-size: 17px; }
+    .nav-item:hover { color: var(--ink); background: var(--surface-2); }
+    .nav-item.active { color: var(--accent); background: var(--accent-soft); }
+    .sidebar-foot { margin-top: auto; }
+    .api-status { display: flex; align-items: center; gap: 7px; padding: 11px 10px; color: var(--muted); font-size: 10px; font-weight: 600; }
+    .status-dot { width: 7px; height: 7px; border-radius: 50%; background: #47c879; box-shadow: 0 0 0 3px rgba(71, 200, 121, .15); }
+    main { min-width: 0; padding: 25px 27px 28px; }
+    .page { display: none; }
+    .page.active { display: block; animation: rise .22s ease; }
+    @keyframes rise { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
+    .page-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; margin-bottom: 16px; }
+    h1 { font-size: 24px; letter-spacing: -.85px; line-height: 1; }
+    .subtitle { margin-top: 7px; color: var(--muted); font-size: 11px; line-height: 1.5; }
+    .theme-btn {
+      display: flex; align-items: center; gap: 6px; padding: 7px 11px; border: 1px solid var(--line);
+      border-radius: 20px; color: var(--muted); background: var(--surface); font-size: 10px; font-weight: 700;
+    }
+    .workspace { display: grid; grid-template-columns: minmax(305px, .86fr) minmax(430px, 1.4fr); gap: 14px; align-items: start; }
+    .left-stack { display: flex; flex-direction: column; gap: 14px; }
+    .card { padding: 16px; border: 1px solid var(--line); border-radius: 15px; background: var(--surface); box-shadow: var(--shadow); }
+    .card-title { margin-bottom: 11px; color: var(--muted); font-size: 10px; font-weight: 700; letter-spacing: .7px; text-transform: uppercase; }
+    .form-heading { font-size: 11px; letter-spacing: 0; text-transform: none; }
+    .prompt-wrap { position: relative; }
+    textarea {
+      width: 100%; min-height: 97px; padding: 12px 12px 32px; resize: vertical; outline: none;
+      color: var(--ink); border: 1px solid var(--line); border-radius: 11px; background: var(--surface-2);
+      font-size: 12px; line-height: 1.65; transition: .16s;
+    }
+    textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(255, 68, 79, .1); }
+    textarea::placeholder { color: var(--faint); }
+    .prompt-hint { position: absolute; bottom: 10px; left: 12px; display: flex; gap: 4px; color: var(--faint); font-size: 9px; }
+    .quick-prompts { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 9px; }
+    .quick-prompt, .pill {
+      padding: 5px 8px; border: 1px solid var(--line); border-radius: 20px; color: var(--muted);
+      background: var(--surface-2); font-size: 9px; font-weight: 600; transition: .16s;
+    }
+    .quick-prompt:hover, .pill:hover { border-color: var(--accent); color: var(--accent); }
+    .angle-layout { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+    .angle-row { display: flex; justify-content: center; gap: 6px; width: 100%; }
+    .angle-btn {
+      flex: 0 0 49px; height: 51px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+      color: var(--faint); border: 1px solid var(--line); border-radius: 9px; background: var(--surface-2);
+      font-size: 8px; font-weight: 700; transition: .16s;
+    }
+    .angle-btn i { font-size: 18px; }
+    .angle-btn:hover { color: var(--ink); border-color: var(--faint); }
+    .angle-btn.active { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
+    .output-card { padding: 16px; }
+    .output-zone {
+      position: relative; min-height: 425px; display: grid; place-items: center; overflow: hidden;
+      border: 1px solid var(--line); border-radius: 12px; background:
+        radial-gradient(circle at 50% 42%, rgba(255,255,255,.95), rgba(255,255,255,.35) 28%, transparent 58%),
+        linear-gradient(135deg, var(--surface-2), var(--base));
+    }
+    body.dark .output-zone { background: radial-gradient(circle at 50% 42%, rgba(255,255,255,.1), transparent 35%), linear-gradient(135deg, var(--surface-2), var(--base)); }
+    .output-zone::before {
+      content: ""; position: absolute; inset: 0; opacity: .55;
+      background-image: linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px);
+      background-size: 28px 28px; mask-image: linear-gradient(to bottom, transparent, #000 45%, transparent);
+    }
+    .empty-state { position: relative; z-index: 1; text-align: center; }
+    .empty-icon { width: 52px; height: 52px; display: grid; place-items: center; margin: 0 auto 11px; color: var(--faint); border: 1px solid var(--line); border-radius: 16px; background: var(--surface); box-shadow: var(--shadow); }
+    .empty-icon i { font-size: 24px; }
+    .empty-title { color: var(--muted); font-size: 12px; font-weight: 700; }
+    .empty-sub { margin-top: 5px; color: var(--faint); font-size: 10px; }
+    .stage-badges { position: absolute; right: 12px; bottom: 12px; display: flex; gap: 5px; }
+    .stage-badges span { padding: 4px 7px; color: var(--muted); border: 1px solid var(--line); border-radius: 20px; background: var(--surface); font-size: 8px; font-weight: 700; letter-spacing: .4px; }
+    .result-art { position: relative; z-index: 1; display: none; width: 235px; height: 235px; animation: artIn .45s ease; }
+    @keyframes artIn { from { opacity: 0; transform: scale(.87) rotate(-6deg); } to { opacity: 1; transform: none; } }
+    .result-art.show { display: block; }
+    .generated-image { position: relative; z-index: 1; display: none; max-width: 84%; max-height: 360px; object-fit: contain; filter: drop-shadow(0 22px 18px rgba(53, 38, 35, .17)); animation: artIn .45s ease; }
+    .generated-image.show { display: block; }
+    .orb-shadow { position: absolute; width: 178px; height: 28px; left: 29px; bottom: 9px; border-radius: 50%; background: rgba(72, 44, 31, .18); filter: blur(12px); }
+    .orb {
+      position: absolute; inset: 17px 17px 30px; display: grid; place-items: center; border: 2px solid rgba(255,255,255,.65); border-radius: 34%;
+      background: linear-gradient(135deg, #fff0a4, #ff6f4e 41%, #b52b50 76%, #54167c);
+      box-shadow: inset 16px 14px 24px rgba(255,255,255,.35), inset -16px -20px 28px rgba(48,10,76,.28), 0 22px 38px rgba(128,50,52,.28);
+      transform: rotate(-12deg);
+    }
+    .orb::before { content: ""; position: absolute; inset: 13px; border: 1px solid rgba(255,255,255,.48); border-radius: 29%; }
+    .orb i { color: #fff4dc; font-size: 89px; text-shadow: 0 7px 15px rgba(77, 9, 67, .25); transform: rotate(12deg); }
+    .loading { display: none; position: relative; z-index: 1; color: var(--accent); text-align: center; font-size: 11px; font-weight: 700; }
+    .loading.show { display: block; }
+    .output-error { position: relative; z-index: 1; display: none; max-width: 330px; padding: 0 20px; color: var(--accent-dark); font-size: 11px; font-weight: 700; line-height: 1.55; text-align: center; }
+    .output-error.show { display: block; }
+    .loader { width: 26px; height: 26px; margin: 0 auto 10px; border: 3px solid var(--line); border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .resolution { display: flex; gap: 5px; margin-right: auto; }
+    .pill.active { color: var(--surface); border-color: var(--ink); background: var(--ink); }
+    .generate-options { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line); }
+    .generate-options .card-title { margin: 0; }
+    .generate-options .resolution { margin-right: 0; }
+    .transparent-option { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 12px; color: var(--muted); font-size: 10px; font-weight: 700; }
+    .transparent-toggle { position: relative; width: 35px; height: 20px; flex: 0 0 auto; }
+    .transparent-toggle input { position: absolute; opacity: 0; pointer-events: none; }
+    .transparent-toggle span { position: absolute; inset: 0; border: 1px solid var(--line); border-radius: 20px; background: var(--surface-2); transition: .16s; }
+    .transparent-toggle span::after { content: ""; position: absolute; top: 3px; left: 3px; width: 12px; height: 12px; border-radius: 50%; background: var(--faint); transition: .16s; }
+    .transparent-toggle input:checked + span { border-color: var(--accent); background: var(--accent-soft); }
+    .transparent-toggle input:checked + span::after { transform: translateX(15px); background: var(--accent); }
+    .transparent-toggle input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .secondary-btn, .primary-btn {
+      display: flex; align-items: center; justify-content: center; gap: 6px; padding: 9px 11px;
+      border-radius: 9px; font-size: 10px; font-weight: 700; transition: .16s;
+    }
+    .secondary-btn { color: var(--muted); border: 1px solid var(--line); background: var(--surface-2); }
+    .secondary-btn:hover { color: var(--ink); }
+    .primary-btn { min-width: 122px; color: #fff; border: 1px solid var(--accent); background: var(--accent); box-shadow: 0 7px 16px rgba(255, 68, 79, .2); }
+    .primary-btn:hover { background: var(--accent-dark); transform: translateY(-1px); }
+    .generate-submit { width: 100%; margin-top: 14px; padding: 11px; }
+    .dropzone {
+      display: block; padding: 25px 14px; color: var(--muted); border: 1px dashed var(--line); border-radius: 11px;
+      background: var(--surface-2); text-align: center; transition: .16s;
+    }
+    .dropzone:hover { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
+    .dropzone input { display: none; }
+    .dropzone i { display: block; margin-bottom: 6px; font-size: 21px; }
+    .drop-title { font-size: 11px; font-weight: 700; }
+    .drop-sub, .helper { margin-top: 4px; color: var(--faint); font-size: 9px; line-height: 1.55; }
+    .thumbs { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+    .thumb { width: 43px; height: 43px; display: grid; place-items: center; overflow: hidden; color: var(--faint); border: 1px solid var(--line); border-radius: 9px; background: var(--surface-2); }
+    .thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .array-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+    .array-btn {
+      display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 12px 4px;
+      color: var(--muted); border: 1px solid var(--line); border-radius: 10px; background: var(--surface-2);
+      font-size: 9px; font-weight: 700; transition: .16s;
+    }
+    .array-btn i { font-size: 18px; }
+    .array-btn.active { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
+    .history-card { margin-top: 14px; padding: 15px; scroll-margin-top: 16px; }
+    .history-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+    .history-title { display: flex; align-items: center; gap: 7px; color: var(--ink); font-size: 12px; font-weight: 700; }
+    .history-title i { color: var(--accent); font-size: 17px; }
+    .history-count { color: var(--faint); font-size: 9px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; }
+    .clear-history {
+      padding: 6px 9px; color: var(--muted); border: 1px solid var(--line); border-radius: 8px;
+      background: var(--surface-2); font-size: 9px; font-weight: 700; transition: .16s;
+    }
+    .clear-history:hover { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
+    .clear-history:disabled { cursor: default; opacity: .45; }
+    .library-toolbar, .library-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+    .library-toolbar { justify-content: space-between; margin-bottom: 10px; }
+    .library-tabs { display: flex; flex-wrap: wrap; gap: 5px; }
+    .library-tab, .bulk-btn {
+      padding: 6px 9px; color: var(--muted); border: 1px solid var(--line); border-radius: 20px;
+      background: var(--surface-2); font-size: 9px; font-weight: 700; transition: .16s;
+    }
+    .library-tab:hover, .bulk-btn:hover { color: var(--accent); border-color: var(--accent); }
+    .library-tab.active { color: #fff; border-color: var(--accent); background: var(--accent); }
+    .bulk-btn { border-radius: 8px; }
+    .bulk-btn:disabled { cursor: default; opacity: .45; }
+    .history-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 9px;
+      max-height: 288px; overflow-y: auto; padding: 2px 3px 3px 2px; scrollbar-color: var(--faint) transparent;
+    }
+    .history-empty {
+      padding: 24px 12px; color: var(--faint); border: 1px dashed var(--line); border-radius: 10px;
+      background: var(--surface-2); font-size: 10px; line-height: 1.6; text-align: center;
+    }
+    .history-item {
+      position: relative; min-width: 0; overflow: hidden; color: var(--muted); border: 1px solid var(--line);
+      border-radius: 11px; background: var(--surface-2); text-align: left; transition: .16s;
+    }
+    .history-item:hover, .history-item:focus-visible { border-color: var(--faint); transform: translateY(-2px); box-shadow: var(--shadow); }
+    .history-item.selected { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(255, 68, 79, .14); }
+    .history-item.checked { background: var(--accent-soft); }
+    .history-image { width: 100%; aspect-ratio: 1; display: block; object-fit: contain; background: var(--base); }
+    .history-meta {
+      position: absolute; right: 0; bottom: 0; left: 0; padding: 28px 9px 9px;
+      color: #fff; background: linear-gradient(to top, rgba(20,20,20,.8), rgba(20,20,20,.46) 58%, transparent);
+      opacity: 0; transform: translateY(5px); transition: .18s; pointer-events: none;
+    }
+    .history-item:hover .history-meta, .history-item:focus-visible .history-meta { opacity: 1; transform: none; }
+    .history-prompt { overflow: hidden; color: #fff; font-size: 9px; font-weight: 700; line-height: 1.35; text-overflow: ellipsis; white-space: nowrap; }
+    .history-detail { margin-top: 3px; color: rgba(255,255,255,.75); font-size: 8px; font-weight: 600; }
+    .asset-type {
+      position: absolute; top: 7px; left: 36px; padding: 4px 6px; color: #fff; border-radius: 20px;
+      background: rgba(28,28,30,.62); font-size: 7px; font-weight: 700; letter-spacing: .5px; opacity: 0;
+      text-transform: uppercase; transition: .16s;
+    }
+    .asset-check { position: absolute; right: 7px; bottom: 7px; z-index: 2; width: 17px; height: 17px; accent-color: var(--accent); }
+    .asset-actions { position: absolute; top: 6px; right: 6px; left: 6px; display: flex; justify-content: space-between; pointer-events: none; }
+    .asset-action {
+      width: 24px; height: 24px; display: grid; place-items: center; padding: 0; color: #fff;
+      border: 1px solid rgba(255,255,255,.34); border-radius: 7px; background: rgba(28,28,30,.62);
+      opacity: 0; pointer-events: auto; transition: .16s;
+    }
+    .asset-action i { font-size: 13px; }
+    .asset-action:hover { color: #fff; border-color: var(--accent); background: var(--accent); }
+    .delete-history {
+      width: 24px; height: 24px; display: grid; place-items: center; color: #fff;
+      border: 1px solid rgba(255,255,255,.34); border-radius: 7px; background: rgba(28,28,30,.62);
+      opacity: 0; pointer-events: auto; transition: .16s;
+    }
+    .delete-history i { font-size: 13px; }
+    .delete-history:hover { border-color: var(--accent); background: var(--accent); }
+    .history-item:hover .asset-action, .history-item:hover .delete-history, .history-item:hover .asset-type, .asset-action:focus, .delete-history:focus { opacity: 1; }
+    .mobile-nav { display: none; }
+    @media (max-width: 900px) {
+      .app { grid-template-columns: 1fr; }
+      .sidebar { display: none; }
+      main { padding: 20px 16px 77px; }
+      .workspace { grid-template-columns: 1fr; }
+      .output-zone { min-height: 360px; }
+      .history-grid { grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); max-height: 250px; }
+      .library-toolbar { align-items: flex-start; flex-direction: column; }
+      .mobile-nav {
+        position: fixed; z-index: 10; right: 12px; bottom: 12px; left: 12px; display: flex; justify-content: space-around;
+        padding: 7px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); box-shadow: var(--shadow);
+      }
+      .mobile-nav .nav-item { width: auto; flex-direction: column; gap: 3px; padding: 6px 13px; font-size: 8px; }
+      .mobile-nav .nav-item i { font-size: 17px; }
+    }
+    @media (max-width: 430px) {
+      .primary-btn { flex: 1; }
+      .output-zone { min-height: 310px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand"><div class="brand-mark"><i class="ti ti-hammer"></i></div><div><div class="brand-name">Chrome Smith</div><div class="brand-sub">3D Asset Studio</div></div></div>
+      <div class="nav-label">Create</div>
+      <button class="nav-item active" data-page="generate"><i class="ti ti-sparkles"></i> Generate</button>
+      <button class="nav-item" data-page="reangle"><i class="ti ti-view-360-arrow"></i> Re-angle</button>
+      <button class="nav-item" data-page="array"><i class="ti ti-grid-dots"></i> Array</button>
+      <div class="nav-label">Workspace</div>
+      <button class="nav-item" data-page="workspace-history"><i class="ti ti-history"></i> History</button>
+      <button class="nav-item"><i class="ti ti-settings"></i> Settings</button>
+      <div class="sidebar-foot"><div class="api-status"><span class="status-dot"></span> Engine ready</div></div>
+    </aside>
+
+    <main>
+      <section class="page active" id="generate">
+        <header class="page-head"><div><h1>Generate</h1><p class="subtitle">Describe your object and shape it into a polished 3D asset.</p></div><button class="theme-btn"><i class="ti ti-moon"></i><span>Dark</span></button></header>
+        <div class="workspace">
+          <div class="left-stack">
+            <div class="card">
+              <div class="card-title form-heading">What do you want to generate:</div>
+              <div class="prompt-wrap"><textarea id="prompt" placeholder="A liquid chrome rocket with warm red reflections..."></textarea><span class="prompt-hint"><i class="ti ti-sparkles"></i> Style is inferred from your description</span></div>
+              <div class="quick-prompts"><button class="quick-prompt">Chrome rocket</button><button class="quick-prompt">Gold bitcoin</button><button class="quick-prompt">Glass heart</button></div>
+              <div class="card-title form-heading" style="margin-top:16px;">Choose your angle</div><div class="angle-layout" data-single="angle">
+              <div class="angle-row"><button class="angle-btn"><i class="ti ti-box"></i>Top L</button><button class="angle-btn"><i class="ti ti-arrow-up"></i>Top CL</button><button class="angle-btn"><i class="ti ti-arrow-up"></i>Top CR</button><button class="angle-btn"><i class="ti ti-box"></i>Top R</button></div>
+              <div class="angle-row"><button class="angle-btn"><i class="ti ti-arrow-left"></i>Side L</button><button class="angle-btn"><i class="ti ti-box"></i>3/4 L</button><button class="angle-btn active"><i class="ti ti-square"></i>Front</button><button class="angle-btn"><i class="ti ti-box"></i>3/4 R</button><button class="angle-btn"><i class="ti ti-arrow-right"></i>Side R</button></div>
+              <div class="angle-row"><button class="angle-btn"><i class="ti ti-box"></i>Bot L</button><button class="angle-btn"><i class="ti ti-arrow-down"></i>Bot CL</button><button class="angle-btn"><i class="ti ti-arrow-down"></i>Bot CR</button><button class="angle-btn"><i class="ti ti-box"></i>Bot R</button></div>
+              </div>
+              <div class="generate-options"><div class="card-title">Resolution</div><div class="resolution" data-single="pill"><button class="pill">2K</button><button class="pill active">4K</button></div></div>
+              <label class="transparent-option"><span>Transparent Background</span><span class="transparent-toggle"><input type="checkbox" id="transparent-background" checked><span></span></span></label>
+              <button class="primary-btn generate-submit" data-generate data-live><i class="ti ti-sparkles"></i> Generate</button>
+            </div>
+          </div>
+          <div class="card output-card"><div class="card-title">Output preview</div><div class="output-zone" data-output><div class="empty-state"><div class="empty-icon"><i class="ti ti-cube"></i></div><div class="empty-title">Your 3D object appears here</div><div class="empty-sub">Enter a prompt to forge your first asset</div></div><div class="loading"><div class="loader"></div>Forging object...</div><div class="output-error"></div><img class="generated-image" alt="Generated 3D object"><div class="result-art"><div class="orb-shadow"></div><div class="orb"><i class="ti ti-rocket"></i></div></div><div class="stage-badges"><span>PNG</span><span data-background-badge>TRANSPARENT</span></div></div></div>
+        </div>
+        <div class="card history-card context-history" data-history-scope="generate"><div class="history-head"><div><div class="history-title"><i class="ti ti-sparkles"></i> Generate History</div><div class="history-count" data-history-count>0 assets</div></div></div><div class="library-toolbar"><div class="library-actions"><button class="bulk-btn" data-download-selected disabled><i class="ti ti-download"></i> Download Selected</button><button class="bulk-btn" data-delete-selected disabled><i class="ti ti-trash"></i> Delete Selected</button><button class="bulk-btn" data-clear-scope disabled>Clear Generate History</button></div></div><div class="history-grid" data-history-grid></div></div>
+      </section>
+
+      <section class="page" id="reangle">
+        <header class="page-head"><div><h1>Re-angle</h1><p class="subtitle">Recreate an existing object from a fresh perspective.</p></div><button class="theme-btn"><i class="ti ti-moon"></i><span>Dark</span></button></header>
+        <div class="workspace">
+          <div class="left-stack">
+            <div class="card"><div class="card-title">Upload object</div><label class="dropzone"><input type="file" accept="image/*"><i class="ti ti-upload"></i><span class="drop-title">Drop your 3D object here</span><div class="drop-sub">PNG, JPG or WebP up to 20MB</div></label><div class="thumbs"></div><div class="card-title form-heading" style="margin-top:16px;">Choose your angle</div><div class="angle-layout" data-single="angle"><div class="angle-row"><button class="angle-btn"><i class="ti ti-box"></i>Top L</button><button class="angle-btn"><i class="ti ti-arrow-up"></i>Top CL</button><button class="angle-btn"><i class="ti ti-arrow-up"></i>Top CR</button><button class="angle-btn"><i class="ti ti-box"></i>Top R</button></div><div class="angle-row"><button class="angle-btn"><i class="ti ti-arrow-left"></i>Side L</button><button class="angle-btn"><i class="ti ti-box"></i>3/4 L</button><button class="angle-btn active"><i class="ti ti-square"></i>Front</button><button class="angle-btn"><i class="ti ti-box"></i>3/4 R</button><button class="angle-btn"><i class="ti ti-arrow-right"></i>Side R</button></div><div class="angle-row"><button class="angle-btn"><i class="ti ti-box"></i>Bot L</button><button class="angle-btn"><i class="ti ti-arrow-down"></i>Bot CL</button><button class="angle-btn"><i class="ti ti-arrow-down"></i>Bot CR</button><button class="angle-btn"><i class="ti ti-box"></i>Bot R</button></div></div><p class="helper">Material, lighting and color remain consistent while the perspective changes.</p><div class="generate-options"><div class="card-title">Resolution</div><div class="resolution" data-single="pill"><button class="pill">2K</button><button class="pill active">4K</button></div></div><button class="primary-btn generate-submit" data-generate><i class="ti ti-view-360-arrow"></i> Re-angle</button></div>
+          </div>
+          <div class="card output-card"><div class="card-title">Output preview</div><div class="output-zone" data-output><div class="empty-state"><div class="empty-icon"><i class="ti ti-view-360-arrow"></i></div><div class="empty-title">Your re-angled object appears here</div><div class="empty-sub">Upload an object and choose a new camera angle</div></div><div class="loading"><div class="loader"></div>Rebuilding perspective...</div><div class="result-art"><div class="orb-shadow"></div><div class="orb"><i class="ti ti-rocket"></i></div></div><img class="generated-image" alt="Re-angled 3D object"><div class="stage-badges"><span>PNG</span><span>TRANSPARENT</span></div></div></div>
+        </div>
+        <div class="card history-card context-history" data-history-scope="reangle"><div class="history-head"><div><div class="history-title"><i class="ti ti-view-360-arrow"></i> Re-angle History</div><div class="history-count" data-history-count>0 assets</div></div></div><div class="library-toolbar"><div class="library-actions"><button class="bulk-btn" data-download-selected disabled><i class="ti ti-download"></i> Download Selected</button><button class="bulk-btn" data-delete-selected disabled><i class="ti ti-trash"></i> Delete Selected</button><button class="bulk-btn" data-clear-scope disabled>Clear Re-angle History</button></div></div><div class="history-grid" data-history-grid></div></div>
+      </section>
+
+      <section class="page" id="array">
+        <header class="page-head"><div><h1>Array</h1><p class="subtitle">Arrange one or more 3D assets into a composed visual.</p></div><button class="theme-btn"><i class="ti ti-moon"></i><span>Dark</span></button></header>
+        <div class="workspace">
+          <div class="left-stack">
+            <div class="card"><div class="card-title">Upload objects</div><label class="dropzone"><input type="file" accept="image/*" multiple><i class="ti ti-upload"></i><span class="drop-title">Drop one or more objects here</span><div class="drop-sub">PNG, JPG or WebP up to 20MB each</div></label><div class="thumbs"></div><p class="helper">Use one object for a repeating pattern or multiple objects for a mixed composition.</p><div class="card-title form-heading" style="margin-top:16px;">Array style</div><div class="array-grid" data-single="array-btn"><button class="array-btn active"><i class="ti ti-grid-dots"></i>Grid</button><button class="array-btn"><i class="ti ti-arrows-shuffle"></i>Scatter</button><button class="array-btn"><i class="ti ti-trending-up"></i>Diagonal</button><button class="array-btn"><i class="ti ti-wave-sine"></i>Wave</button></div><div class="generate-options"><div class="card-title">Resolution</div><div class="resolution" data-single="pill"><button class="pill">2K</button><button class="pill active">4K</button></div></div><button class="primary-btn generate-submit" data-generate><i class="ti ti-grid-dots"></i> Create array</button></div>
+          </div>
+          <div class="card output-card"><div class="card-title">Output preview</div><div class="output-zone" data-output><div class="empty-state"><div class="empty-icon"><i class="ti ti-grid-dots"></i></div><div class="empty-title">Your composition appears here</div><div class="empty-sub">Upload assets and choose an arrangement</div></div><div class="loading"><div class="loader"></div>Composing array...</div><div class="result-art"><div class="orb-shadow"></div><div class="orb"><i class="ti ti-grid-dots"></i></div></div><img class="generated-image" alt="3D array composition"><div class="stage-badges"><span>PNG</span><span>TRANSPARENT</span></div></div></div>
+        </div>
+        <div class="card history-card context-history" data-history-scope="array"><div class="history-head"><div><div class="history-title"><i class="ti ti-grid-dots"></i> Array History</div><div class="history-count" data-history-count>0 assets</div></div></div><div class="library-toolbar"><div class="library-actions"><button class="bulk-btn" data-download-selected disabled><i class="ti ti-download"></i> Download Selected</button><button class="bulk-btn" data-delete-selected disabled><i class="ti ti-trash"></i> Delete Selected</button><button class="bulk-btn" data-clear-scope disabled>Clear Array History</button></div></div><div class="history-grid" data-history-grid></div></div>
+      </section>
+      <section class="page" id="workspace-history"><header class="page-head"><div><h1>Workspace History</h1><p class="subtitle">Browse and manage every asset created across Chrome Smith.</p></div><button class="theme-btn"><i class="ti ti-moon"></i><span>Dark</span></button></header><div class="card history-card" id="asset-library" data-history-scope="all"><div class="history-head"><div><div class="history-title"><i class="ti ti-library"></i> All Assets</div><div class="history-count" data-history-count>0 assets</div></div><button class="clear-history" data-clear-history disabled>Clear All Assets</button></div><div class="library-toolbar"><div class="library-tabs"><button class="library-tab active" data-library-filter="all">All Assets</button><button class="library-tab" data-library-filter="generate">Generate</button><button class="library-tab" data-library-filter="reangle">Re-angle</button><button class="library-tab" data-library-filter="array">Array</button></div><div class="library-actions"><button class="bulk-btn" data-download-selected disabled><i class="ti ti-download"></i> Download Selected</button><button class="bulk-btn" data-delete-selected disabled><i class="ti ti-trash"></i> Delete Selected</button><button class="bulk-btn" data-clear-scope disabled>Clear Current View</button></div></div><div class="history-grid" data-history-grid></div></div></section>
+    </main>
+  </div>
+  <nav class="mobile-nav"><button class="nav-item active" data-page="generate"><i class="ti ti-sparkles"></i>Generate</button><button class="nav-item" data-page="reangle"><i class="ti ti-view-360-arrow"></i>Re-angle</button><button class="nav-item" data-page="array"><i class="ti ti-grid-dots"></i>Array</button><button class="nav-item" data-page="workspace-history"><i class="ti ti-library"></i>History</button></nav>
+  <script>
+    const pages = document.querySelectorAll(".page");
+    const HISTORY_KEY = "chromeSmithAssetLibrary";
+    const LEGACY_HISTORY_KEY = "chromeSmithGenerationHistory";
+    let assetLibrary = [];
+    let selectedAssetId = null;
+    let libraryFilter = "all";
+    const checkedAssetIds = new Set();
+    document.querySelectorAll("[data-page]").forEach(button => button.addEventListener("click", () => {
+      const id = button.dataset.page;
+      pages.forEach(page => page.classList.toggle("active", page.id === id));
+      document.querySelectorAll("[data-page]").forEach(item => item.classList.toggle("active", item.dataset.page === id));
+    }));
+    document.querySelectorAll("[data-single]").forEach(group => group.addEventListener("click", event => {
+      const button = event.target.closest("button");
+      if (!button) return;
+      group.querySelectorAll("button").forEach(item => item.classList.remove("active"));
+      button.classList.add("active");
+    }));
+    document.querySelectorAll(".theme-btn").forEach(button => button.addEventListener("click", () => {
+      document.body.classList.toggle("dark");
+      const dark = document.body.classList.contains("dark");
+      document.querySelectorAll(".theme-btn").forEach(item => { item.querySelector("i").className = dark ? "ti ti-sun" : "ti ti-moon"; item.querySelector("span").textContent = dark ? "Light" : "Dark"; });
+    }));
+    document.querySelectorAll(".quick-prompt").forEach(button => button.addEventListener("click", () => {
+      document.querySelector("#prompt").value = button.textContent === "Chrome rocket" ? "A liquid chrome rocket with warm red reflections" : button.textContent === "Gold bitcoin" ? "A polished gold bitcoin coin with soft studio reflections" : "A translucent glass heart with a pearlescent pink glow";
+    }));
+    document.querySelectorAll("input[type=file]").forEach(input => input.addEventListener("change", () => {
+      const thumbs = input.closest(".card").querySelector(".thumbs");
+      thumbs.innerHTML = "";
+      [...input.files].slice(0, 6).forEach(file => { const thumb = document.createElement("div"); thumb.className = "thumb"; const image = document.createElement("img"); image.src = URL.createObjectURL(file); image.alt = file.name; thumb.append(image); thumbs.append(thumb); });
+    }));
+    document.querySelectorAll("[data-generate]").forEach(button => button.addEventListener("click", async () => {
+      const output = button.closest(".page").querySelector("[data-output]");
+      output.querySelector(".empty-state").style.display = "none";
+      output.querySelector(".result-art").classList.remove("show");
+      output.querySelector(".generated-image")?.classList.remove("show");
+      output.querySelector(".output-error")?.classList.remove("show");
+      output.querySelector(".loading").classList.add("show");
+      const page = button.closest(".page");
+      if (!button.hasAttribute("data-live")) {
+        setTimeout(async () => {
+          output.querySelector(".loading").classList.remove("show");
+          output.querySelector(".result-art").classList.add("show");
+          const image = createDemoImage(page.id);
+          output.querySelector(".result-art").classList.remove("show");
+          showPreview(page.id, image);
+          await addAsset({ type: page.id, image, sourceImage: getUploadedSources(page), action: getAssetAction(page), settings: getAssetSettings(page) });
+        }, 850);
+        return;
+      }
+      button.disabled = true;
+      try {
+        const angle = document.querySelector("#generate .angle-btn.active").textContent.trim();
+        const description = document.querySelector("#prompt").value.trim();
+        if (!description) throw new Error("Enter a prompt before generating.");
+        const resolution = document.querySelector("#generate .resolution .pill.active").textContent.trim();
+        const transparentBackground = document.querySelector("#transparent-background").checked;
+        const backgroundInstruction = transparentBackground ? "Isolated 3D object with a native transparent background." : "Polished 3D object with an appropriate background.";
+        const prompt = `${description}. Camera angle: ${angle}. ${backgroundInstruction}`;
+        const response = await fetch("/api/generate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ prompt, resolution, transparentBackground }) });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || "Generation failed.");
+        const image = output.querySelector(".generated-image");
+        image.src = data.image;
+        image.classList.add("show");
+        output.querySelector("[data-background-badge]").textContent = transparentBackground ? "TRANSPARENT" : "AUTO BG";
+        await addAsset({ type: "generate", image: data.image, prompt: description, action: angle, settings: { resolution, transparentBackground } });
+      } catch (error) {
+        const message = output.querySelector(".output-error");
+        message.textContent = error.message;
+        message.classList.add("show");
+      } finally {
+        output.querySelector(".loading").classList.remove("show");
+        button.disabled = false;
+      }
+    }));
+    function saveHistory() {
+      while (assetLibrary.length) {
+        try {
+          localStorage.setItem(HISTORY_KEY, JSON.stringify(assetLibrary));
+          return;
+        } catch {
+          assetLibrary.pop();
+        }
+      }
+      localStorage.removeItem(HISTORY_KEY);
+    }
+    function getPersistedImage(source) {
+      return new Promise(async resolve => {
+        try {
+          const url = source.startsWith("data:") ? source : `/api/download?url=${encodeURIComponent(source)}`;
+          const response = await fetch(url);
+          if (!response.ok) throw new Error("Could not prepare image history.");
+          const blob = await response.blob();
+          const objectUrl = URL.createObjectURL(blob);
+          const image = new Image();
+          image.onload = () => {
+            const scale = Math.min(1, 900 / Math.max(image.width, image.height));
+            const canvas = document.createElement("canvas");
+            canvas.width = Math.max(1, Math.round(image.width * scale));
+            canvas.height = Math.max(1, Math.round(image.height * scale));
+            canvas.getContext("2d").drawImage(image, 0, 0, canvas.width, canvas.height);
+            URL.revokeObjectURL(objectUrl);
+            resolve(canvas.toDataURL("image/png"));
+          };
+          image.onerror = () => { URL.revokeObjectURL(objectUrl); resolve(source); };
+          image.src = objectUrl;
+        } catch {
+          resolve(source);
+        }
+      });
+    }
+    function createDemoImage(type) {
+      const canvas = document.createElement("canvas");
+      canvas.width = canvas.height = 1024;
+      const context = canvas.getContext("2d");
+      context.clearRect(0, 0, canvas.width, canvas.height);
+      const gradient = context.createLinearGradient(160, 120, 880, 920);
+      gradient.addColorStop(0, "#fff0a4"); gradient.addColorStop(.42, "#ff6f4e"); gradient.addColorStop(.76, "#b52b50"); gradient.addColorStop(1, "#54167c");
+      context.fillStyle = gradient; context.beginPath(); context.roundRect(180, 180, 664, 664, 150); context.fill();
+      context.strokeStyle = "rgba(255,255,255,.6)"; context.lineWidth = 8; context.stroke();
+      context.fillStyle = "rgba(255,255,255,.88)"; context.font = "700 68px Inter, sans-serif"; context.textAlign = "center"; context.fillText(type === "array" ? "ARRAY" : "3D", 512, 540);
+      return canvas.toDataURL("image/png");
+    }
+    function getUploadedSources(page) {
+      return [...page.querySelectorAll(".thumb img")].map(image => image.src);
+    }
+    function getAssetAction(page) {
+      if (page.id === "reangle") return page.querySelector(".angle-btn.active").textContent.trim();
+      if (page.id === "array") return page.querySelector(".array-btn.active").textContent.trim();
+      return "";
+    }
+    function getAssetSettings(page) {
+      const resolution = page.querySelector(".resolution .pill.active")?.textContent.trim() || "4K";
+      return page.id === "array" ? { layout: getAssetAction(page), sourceCount: getUploadedSources(page).length, resolution } : { resolution };
+    }
+    async function addAsset(asset) {
+      const image = await getPersistedImage(asset.image);
+      const item = { id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, ...asset, image, createdAt: new Date().toISOString() };
+      const duplicate = assetLibrary.find(entry => entry.type === item.type && entry.image === item.image && entry.action === item.action);
+      if (duplicate) assetLibrary = assetLibrary.filter(entry => entry.id !== duplicate.id);
+      assetLibrary.unshift(item);
+      selectedAssetId = item.id;
+      saveHistory();
+      renderHistories();
+    }
+    async function normalizeStoredImages() {
+      let changed = false;
+      for (const item of assetLibrary) {
+        if (!item.image.startsWith("data:image/png")) {
+          item.image = await getPersistedImage(item.image);
+          changed = true;
+        }
+      }
+      if (changed) {
+        saveHistory();
+        const selected = assetLibrary.find(item => item.id === selectedAssetId);
+        if (selected) showPreview(selected.type, selected.image);
+        renderHistories();
+      }
+    }
+    function showPreview(type, source) {
+      const page = document.querySelector(`#${type}`);
+      const output = page.querySelector("[data-output]");
+      output.querySelector(".empty-state").style.display = "none";
+      output.querySelector(".loading").classList.remove("show");
+      output.querySelector(".output-error")?.classList.remove("show");
+      output.querySelector(".result-art").classList.remove("show");
+      const image = output.querySelector(".generated-image");
+      image.src = source;
+      image.classList.add("show");
+    }
+    function resetPreviews() {
+      document.querySelectorAll("[data-output]").forEach(output => {
+        output.querySelector(".generated-image")?.classList.remove("show");
+        output.querySelector(".result-art").classList.remove("show");
+        output.querySelector(".empty-state").style.display = "";
+      });
+    }
+    function selectAsset(id) {
+      const item = assetLibrary.find(entry => entry.id === id);
+      if (!item) return;
+      selectedAssetId = id;
+      document.querySelector(`[data-page="${item.type}"]`).click();
+      showPreview(item.type, item.image);
+      renderHistories();
+    }
+    function deleteAsset(id) {
+      assetLibrary = assetLibrary.filter(item => item.id !== id);
+      checkedAssetIds.delete(id);
+      if (selectedAssetId === id) selectedAssetId = assetLibrary[0]?.id || null;
+      saveHistory();
+      if (selectedAssetId) selectAsset(selectedAssetId); else { resetPreviews(); renderHistories(); }
+    }
+    async function downloadAsset(item) {
+      const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+      const filename = `chrome-smith-${item.type}-${item.id}-${timestamp}`;
+      if (!item.image.startsWith("data:")) {
+        triggerDownload(`/api/download?url=${encodeURIComponent(item.image)}&filename=${encodeURIComponent(filename)}`, filename);
+        return;
+      }
+      const response = await fetch("/api/downloads", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ image: item.image, filename }) });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Could not prepare download.");
+      triggerDownload(data.url, filename);
+    }
+    function triggerDownload(url, filename) {
+      const link = document.createElement("a");
+      link.href = url; link.download = `${filename}.png`;
+      document.body.append(link); link.click(); link.remove();
+    }
+    function getVisibleAssets(panel) {
+      const scope = panel.dataset.historyScope;
+      const filter = scope === "all" ? libraryFilter : scope;
+      return assetLibrary.filter(item => filter === "all" || item.type === filter);
+    }
+    function renderHistory(panel) {
+      const grid = panel.querySelector("[data-history-grid]");
+      const scope = panel.dataset.historyScope;
+      const filter = scope === "all" ? libraryFilter : scope;
+      const visibleAssets = getVisibleAssets(panel);
+      grid.innerHTML = "";
+      panel.querySelector("[data-history-count]").textContent = `${visibleAssets.length} asset${visibleAssets.length === 1 ? "" : "s"}`;
+      panel.querySelector("[data-clear-history]")?.toggleAttribute("disabled", assetLibrary.length === 0);
+      panel.querySelector("[data-download-selected]").disabled = checkedAssetIds.size === 0;
+      panel.querySelector("[data-delete-selected]").disabled = checkedAssetIds.size === 0;
+      panel.querySelector("[data-clear-scope]").disabled = visibleAssets.length === 0;
+      if (!visibleAssets.length) {
+        const empty = document.createElement("div");
+        empty.className = "history-empty";
+        empty.textContent = filter === "all" ? "Your generated assets will collect here as you create them." : `No ${filter === "reangle" ? "re-angle" : filter} assets yet.`;
+        grid.append(empty);
+        return;
+      }
+      visibleAssets.forEach(item => {
+        const card = document.createElement("div");
+        card.className = `history-item${item.id === selectedAssetId ? " selected" : ""}${checkedAssetIds.has(item.id) ? " checked" : ""}`;
+        card.tabIndex = 0;
+        card.setAttribute("role", "button");
+        card.setAttribute("aria-label", `View ${item.type} asset`);
+        card.addEventListener("click", () => selectAsset(item.id));
+        card.addEventListener("keydown", event => { if (event.key === "Enter" || event.key === " ") selectAsset(item.id); });
+        const image = document.createElement("img"); image.className = "history-image"; image.src = item.image; image.alt = item.prompt || item.action || `${item.type} asset`;
+        const meta = document.createElement("div"); meta.className = "history-meta";
+        const prompt = document.createElement("div"); prompt.className = "history-prompt"; prompt.textContent = item.prompt || item.action || `${item.type} asset`;
+        const detail = document.createElement("div"); detail.className = "history-detail"; detail.textContent = new Date(item.createdAt).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+        const badge = document.createElement("span"); badge.className = "asset-type"; badge.textContent = item.type === "reangle" ? "Re-angle" : item.type;
+        const check = document.createElement("input"); check.className = "asset-check"; check.type = "checkbox"; check.checked = checkedAssetIds.has(item.id); check.setAttribute("aria-label", `Select ${item.type} asset`);
+        check.addEventListener("click", event => event.stopPropagation());
+        check.addEventListener("change", () => { check.checked ? checkedAssetIds.add(item.id) : checkedAssetIds.delete(item.id); renderHistories(); });
+        const actions = document.createElement("div"); actions.className = "asset-actions";
+        const download = document.createElement("button"); download.className = "asset-action"; download.type = "button"; download.setAttribute("aria-label", `Download ${item.type} asset`); download.innerHTML = '<i class="ti ti-download"></i>'; download.addEventListener("click", event => { event.stopPropagation(); downloadAsset(item).catch(error => alert(error.message)); });
+        const remove = document.createElement("button"); remove.className = "delete-history"; remove.type = "button"; remove.setAttribute("aria-label", `Delete ${item.type} asset`); remove.innerHTML = '<i class="ti ti-x"></i>';
+        remove.addEventListener("click", event => { event.stopPropagation(); deleteAsset(item.id); });
+        meta.append(prompt, detail); actions.append(remove, download); card.append(image); if (scope === "all") card.append(badge); card.append(check, meta, actions); grid.append(card);
+      });
+    }
+    function renderHistories() {
+      document.querySelectorAll("[data-history-scope]").forEach(renderHistory);
+    }
+    document.querySelector("[data-clear-history]").addEventListener("click", () => {
+      if (!assetLibrary.length || !confirm("Clear all saved assets?")) return;
+      assetLibrary = []; selectedAssetId = null; checkedAssetIds.clear(); resetPreviews(); saveHistory(); renderHistories();
+    });
+    document.querySelectorAll("[data-library-filter]").forEach(button => button.addEventListener("click", () => {
+      libraryFilter = button.dataset.libraryFilter;
+      document.querySelectorAll("[data-library-filter]").forEach(item => item.classList.toggle("active", item === button));
+      renderHistories();
+    }));
+    document.querySelectorAll("[data-download-selected]").forEach(button => button.addEventListener("click", () => assetLibrary.filter(item => checkedAssetIds.has(item.id)).forEach((item, index) => setTimeout(() => downloadAsset(item).catch(error => alert(error.message)), index * 250))));
+    document.querySelectorAll("[data-delete-selected]").forEach(button => button.addEventListener("click", () => {
+      if (!checkedAssetIds.size || !confirm("Delete selected assets?")) return;
+      assetLibrary = assetLibrary.filter(item => !checkedAssetIds.has(item.id)); checkedAssetIds.clear();
+      if (!assetLibrary.some(item => item.id === selectedAssetId)) selectedAssetId = assetLibrary[0]?.id || null;
+      saveHistory(); if (selectedAssetId) selectAsset(selectedAssetId); else { resetPreviews(); renderHistories(); }
+    }));
+    document.querySelectorAll("[data-clear-scope]").forEach(button => button.addEventListener("click", () => {
+      const panel = button.closest("[data-history-scope]");
+      const scope = panel.dataset.historyScope === "all" ? libraryFilter : panel.dataset.historyScope;
+      const label = scope === "all" ? "all assets" : `${scope} assets`;
+      if (!assetLibrary.length || !confirm(`Clear ${label}?`)) return;
+      assetLibrary = scope === "all" ? [] : assetLibrary.filter(item => item.type !== scope);
+      checkedAssetIds.clear(); if (!assetLibrary.some(item => item.id === selectedAssetId)) selectedAssetId = assetLibrary[0]?.id || null;
+      saveHistory(); if (selectedAssetId) selectAsset(selectedAssetId); else { resetPreviews(); renderHistories(); }
+    }));
+    try { assetLibrary = JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]"); } catch { assetLibrary = []; }
+    if (!assetLibrary.length) {
+      try { assetLibrary = JSON.parse(localStorage.getItem(LEGACY_HISTORY_KEY) || "[]").map(item => ({ ...item, type: "generate", action: item.angle })); localStorage.removeItem(LEGACY_HISTORY_KEY); saveHistory(); } catch {}
+    }
+    if (assetLibrary.length) selectAsset(assetLibrary[0].id); else renderHistories();
+    normalizeStoredImages();
+    document.querySelectorAll("[data-download]").forEach(button => button.addEventListener("click", () => {
+      const page = button.closest(".page");
+      const output = page.querySelector("[data-output]");
+      const image = output.querySelector(".generated-image.show");
+      if (image) {
+        downloadAsset({ id: "preview", type: page.id, image: image.src }).catch(error => alert(error.message));
+        return;
+      }
+      alert("Create an image before downloading.");
+    }));
+  </script>
+</body>
+</html>
