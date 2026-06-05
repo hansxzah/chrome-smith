@@ -1,5 +1,916 @@
 {
-  "references": [],
+  "references": [
+    {
+      "id": "generic_silver_aed_silver",
+      "path": "/reference-library/generic/silver/AED_silver.png",
+      "category": "generic_assets_and_numericals",
+      "material": "plain_metallic_chrome",
+      "subject_type": "aed silver",
+      "shape_type": "numerical",
+      "color_behavior": "silver_chrome",
+      "complexity": "simple",
+      "angle_id": null,
+      "use_as": [
+        "style_reference"
+      ]
+    },
+    {
+      "id": "generic_silver_check_silver",
+      "path": "/reference-library/generic/silver/check_silver.png",
+      "category": "generic_assets_and_numericals",
+      "material": "plain_metallic_chrome",
+      "subject_type": "check silver",
+      "shape_type": "simple_icon",
+      "color_behavior": "silver_chrome",
+      "complexity": "simple",
+      "angle_id": null,
+      "use_as": [
+        "style_reference"
+      ]
+    },
+    {
+      "id": "generic_silver_deriv_d_silver",
+      "path": "/reference-library/generic/silver/deriv_d_silver.png",
+      "category": "generic_assets_and_numericals",
+      "material": "plain_metallic_chrome",
+      "subject_type": "deriv d silver",
+      "shape_type": "simple_icon",
+      "color_behavior": "silver_chrome",
+      "complexity": "simple",
+      "angle_id": null,
+      "use_as": [
+        "style_reference"
+      ]
+    },
+    {
+      "id": "generic_silver_eth_silver",
+      "path": "/reference-library/generic/silver/ETH_silver.png",
+      "category": "generic_assets_and_numericals",
+      "material": "plain_metallic_chrome",
+      "subject_type": "eth silver",
+      "shape_type": "simple_icon",
+      "color_behavior": "silver_chrome",
+      "complexity": "simple",
+      "angle_id": null,
+      "use_as": [
+        "style_reference"
+      ]
+    },
+    {
+      "id": "generic_silver_globe_1",
+      "path": "/reference-library/generic/silver/Globe 1.png",
+      "category": "generic_assets_and_numericals",
+      "material": "plain_metallic_chrome",
+      "subject_type": "globe 1",
+      "shape_type": "simple_icon",
+      "color_behavior": "silver_chrome",
+      "complexity": "simple",
+      "angle_id": null,
+      "use_as": [
+        "style_reference"
+      ]
+    },
+    {
+      "id": "generic_silver_open_quote_silver",
+      "path": "/reference-library/generic/silver/open_quote_silver.png",
+      "category": "generic_assets_and_numericals",
+      "material": "plain_metallic_chrome",
+      "subject_type": "open quote silver",
+      "shape_type": "simple_icon",
+      "color_behavior": "silver_chrome",
+      "complexity": "simple",
+      "angle_id": null,
+      "use_as": [
+        "style_reference"
+      ]
+    },
+    {
+      "id": "generic_silver_profile_silver",
+      "path": "/reference-library/generic/silver/profile_silver.png",
+      "category": "generic_assets_and_numericals",
+      "material": "plain_metallic_chrome",
+      "subject_type": "profile silver",
+      "shape_type": "simple_icon",
+      "color_behavior": "silver_chrome",
+      "complexity": "simple",
+      "angle_id": null,
+      "use_as": [
+        "style_reference"
+      ]
+    },
+    {
+      "id": "generic_silver_xrp_silver",
+      "path": "/reference-library/generic/silver/XRP_silver.png",
+      "category": "generic_assets_and_numericals",
+      "material": "plain_metallic_chrome",
+      "subject_type": "xrp silver",
+      "shape_type": "simple_icon",
+      "color_behavior": "silver_chrome",
+      "complexity": "simple",
+      "angle_id": null,
+      "use_as": [
+        "style_reference"
+      ]
+    },
+    {
+      "id": "generic_red_ai_red",
+      "path": "/reference-library/generic/red/AI _red.png",
+      "category": "generic_assets_and_numericals",
+      "material": "plain_red_metallic_chrome",
+      "subject_type": "ai red",
+      "shape_type": "simple_icon",
+      "color_behavior": "red_chrome",
+      "complexity": "simple",
+      "angle_id": null,
+      "use_as": [
+        "style_reference"
+      ]
+    },
+    {
+      "id": "generic_red_check_red",
+      "path": "/reference-library/generic/red/check_red.png",
+      "category": "generic_assets_and_numericals",
+      "material": "plain_red_metallic_chrome",
+      "subject_type": "check red",
+      "shape_type": "simple_icon",
+      "color_behavior": "red_chrome",
+      "complexity": "simple",
+      "angle_id": null,
+      "use_as": [
+        "style_reference"
+      ]
+    },
+    {
+      "id": "generic_red_deriv_d_red",
+      "path": "/reference-library/generic/red/deriv_d_red.png",
+      "category": "generic_assets_and_numericals",
+      "material": "plain_red_metallic_chrome",
+      "subject_type": "deriv d red",
+      "shape_type": "simple_icon",
+      "color_behavior": "red_chrome",
+      "complexity": "simple",
+      "angle_id": null,
+      "use_as": [
+        "style_reference"
+      ]
+    },
+    {
+      "id": "generic_red_fast_red",
+      "path": "/reference-library/generic/red/fast_red.png",
+      "category": "generic_assets_and_numericals",
+      "material": "plain_red_metallic_chrome",
+      "subject_type": "fast red",
+      "shape_type": "simple_icon",
+      "color_behavior": "red_chrome",
+      "complexity": "simple",
+      "angle_id": null,
+      "use_as": [
+        "style_reference"
+      ]
+    },
+    {
+      "id": "generic_red_no_red",
+      "path": "/reference-library/generic/red/no_red.png",
+      "category": "generic_assets_and_numericals",
+      "material": "plain_red_metallic_chrome",
+      "subject_type": "no red",
+      "shape_type": "simple_icon",
+      "color_behavior": "red_chrome",
+      "complexity": "simple",
+      "angle_id": null,
+      "use_as": [
+        "style_reference"
+      ]
+    },
+    {
+      "id": "generic_red_percent_red",
+      "path": "/reference-library/generic/red/percent_red.png",
+      "category": "generic_assets_and_numericals",
+      "material": "plain_red_metallic_chrome",
+      "subject_type": "percent red",
+      "shape_type": "numerical",
+      "color_behavior": "red_chrome",
+      "complexity": "simple",
+      "angle_id": null,
+      "use_as": [
+        "style_reference"
+      ]
+    },
+    {
+      "id": "generic_red_profile_red",
+      "path": "/reference-library/generic/red/profile_red.png",
+      "category": "generic_assets_and_numericals",
+      "material": "plain_red_metallic_chrome",
+      "subject_type": "profile red",
+      "shape_type": "simple_icon",
+      "color_behavior": "red_chrome",
+      "complexity": "simple",
+      "angle_id": null,
+      "use_as": [
+        "style_reference"
+      ]
+    },
+    {
+      "id": "generic_red_silver_check_button_red_plus_silver",
+      "path": "/reference-library/generic/red-silver/check_button_red+silver.png",
+      "category": "generic_assets_and_numericals",
+      "material": "red_silver_metallic_chrome",
+      "subject_type": "check button red silver",
+      "shape_type": "simple_icon",
+      "color_behavior": "red_silver",
+      "complexity": "simple",
+      "angle_id": null,
+      "use_as": [
+        "style_reference"
+      ]
+    },
+    {
+      "id": "generic_red_silver_community_red_plus_silver",
+      "path": "/reference-library/generic/red-silver/community_red+silver.png",
+      "category": "generic_assets_and_numericals",
+      "material": "red_silver_metallic_chrome",
+      "subject_type": "community red silver",
+      "shape_type": "simple_icon",
+      "color_behavior": "red_silver",
+      "complexity": "medium",
+      "angle_id": null,
+      "use_as": [
+        "style_reference"
+      ]
+    },
+    {
+      "id": "generic_red_silver_currency_red_plus_silver",
+      "path": "/reference-library/generic/red-silver/currency_red+silver.png",
+      "category": "generic_assets_and_numericals",
+      "material": "red_silver_metallic_chrome",
+      "subject_type": "currency red silver",
+      "shape_type": "numerical",
+      "color_behavior": "red_silver",
+      "complexity": "simple",
+      "angle_id": null,
+      "use_as": [
+        "style_reference"
+      ]
+    },
+    {
+      "id": "generic_red_silver_deposit_red_plus_silver",
+      "path": "/reference-library/generic/red-silver/deposit_red+silver.png",
+      "category": "generic_assets_and_numericals",
+      "material": "red_silver_metallic_chrome",
+      "subject_type": "deposit red silver",
+      "shape_type": "simple_icon",
+      "color_behavior": "red_silver",
+      "complexity": "simple",
+      "angle_id": null,
+      "use_as": [
+        "style_reference"
+      ]
+    },
+    {
+      "id": "generic_red_silver_files_protfolio_red_plus_silver",
+      "path": "/reference-library/generic/red-silver/files_protfolio_red+silver.png",
+      "category": "generic_assets_and_numericals",
+      "material": "red_silver_metallic_chrome",
+      "subject_type": "files protfolio red silver",
+      "shape_type": "simple_icon",
+      "color_behavior": "red_silver",
+      "complexity": "simple",
+      "angle_id": null,
+      "use_as": [
+        "style_reference"
+      ]
+    },
+    {
+      "id": "generic_red_silver_fingerprint_red_plus_silver",
+      "path": "/reference-library/generic/red-silver/fingerprint_red+silver.png",
+      "category": "generic_assets_and_numericals",
+      "material": "red_silver_metallic_chrome",
+      "subject_type": "fingerprint red silver",
+      "shape_type": "simple_icon",
+      "color_behavior": "red_silver",
+      "complexity": "medium",
+      "angle_id": null,
+      "use_as": [
+        "style_reference"
+      ]
+    },
+    {
+      "id": "generic_red_silver_gear_red_plus_silver",
+      "path": "/reference-library/generic/red-silver/gear_red+silver.png",
+      "category": "generic_assets_and_numericals",
+      "material": "red_silver_metallic_chrome",
+      "subject_type": "gear red silver",
+      "shape_type": "simple_icon",
+      "color_behavior": "red_silver",
+      "complexity": "simple",
+      "angle_id": null,
+      "use_as": [
+        "style_reference"
+      ]
+    },
+    {
+      "id": "generic_red_silver_help_centre_red_plus_silver",
+      "path": "/reference-library/generic/red-silver/help_centre_red+silver.png",
+      "category": "generic_assets_and_numericals",
+      "material": "red_silver_metallic_chrome",
+      "subject_type": "help centre red silver",
+      "shape_type": "simple_icon",
+      "color_behavior": "red_silver",
+      "complexity": "medium",
+      "angle_id": null,
+      "use_as": [
+        "style_reference"
+      ]
+    },
+    {
+      "id": "generic_red_silver_identity_red_plus_silver",
+      "path": "/reference-library/generic/red-silver/identity_red+silver.png",
+      "category": "generic_assets_and_numericals",
+      "material": "red_silver_metallic_chrome",
+      "subject_type": "identity red silver",
+      "shape_type": "simple_icon",
+      "color_behavior": "red_silver",
+      "complexity": "medium",
+      "angle_id": null,
+      "use_as": [
+        "style_reference"
+      ]
+    },
+    {
+      "id": "generic_red_silver_leverage_red_plus_silver",
+      "path": "/reference-library/generic/red-silver/leverage_red+silver.png",
+      "category": "generic_assets_and_numericals",
+      "material": "red_silver_metallic_chrome",
+      "subject_type": "leverage red silver",
+      "shape_type": "simple_icon",
+      "color_behavior": "red_silver",
+      "complexity": "simple",
+      "angle_id": null,
+      "use_as": [
+        "style_reference"
+      ]
+    },
+    {
+      "id": "generic_red_silver_mail_red_plus_silver",
+      "path": "/reference-library/generic/red-silver/mail_red+silver.png",
+      "category": "generic_assets_and_numericals",
+      "material": "red_silver_metallic_chrome",
+      "subject_type": "mail red silver",
+      "shape_type": "simple_icon",
+      "color_behavior": "red_silver",
+      "complexity": "simple",
+      "angle_id": null,
+      "use_as": [
+        "style_reference"
+      ]
+    },
+    {
+      "id": "generic_red_silver_maps_location_red_plus_silver",
+      "path": "/reference-library/generic/red-silver/maps_location_red+silver.png",
+      "category": "generic_assets_and_numericals",
+      "material": "red_silver_metallic_chrome",
+      "subject_type": "maps location red silver",
+      "shape_type": "simple_icon",
+      "color_behavior": "red_silver",
+      "complexity": "medium",
+      "angle_id": null,
+      "use_as": [
+        "style_reference"
+      ]
+    },
+    {
+      "id": "generic_red_silver_mentorship_red_plus_silver",
+      "path": "/reference-library/generic/red-silver/mentorship_red+silver.png",
+      "category": "generic_assets_and_numericals",
+      "material": "red_silver_metallic_chrome",
+      "subject_type": "mentorship red silver",
+      "shape_type": "simple_icon",
+      "color_behavior": "red_silver",
+      "complexity": "medium",
+      "angle_id": null,
+      "use_as": [
+        "style_reference"
+      ]
+    },
+    {
+      "id": "generic_red_silver_no_fees_red_plus_silver",
+      "path": "/reference-library/generic/red-silver/no_fees_red+silver.png",
+      "category": "generic_assets_and_numericals",
+      "material": "red_silver_metallic_chrome",
+      "subject_type": "no fees red silver",
+      "shape_type": "numerical",
+      "color_behavior": "red_silver",
+      "complexity": "simple",
+      "angle_id": null,
+      "use_as": [
+        "style_reference"
+      ]
+    },
+    {
+      "id": "generic_red_silver_p2p_red_plus_silver",
+      "path": "/reference-library/generic/red-silver/p2p_red+silver.png",
+      "category": "generic_assets_and_numericals",
+      "material": "red_silver_metallic_chrome",
+      "subject_type": "p2p red silver",
+      "shape_type": "simple_icon",
+      "color_behavior": "red_silver",
+      "complexity": "simple",
+      "angle_id": null,
+      "use_as": [
+        "style_reference"
+      ]
+    },
+    {
+      "id": "generic_red_silver_play_button_red_plus_silver",
+      "path": "/reference-library/generic/red-silver/play_button_red+silver.png",
+      "category": "generic_assets_and_numericals",
+      "material": "red_silver_metallic_chrome",
+      "subject_type": "play button red silver",
+      "shape_type": "simple_icon",
+      "color_behavior": "red_silver",
+      "complexity": "simple",
+      "angle_id": null,
+      "use_as": [
+        "style_reference"
+      ]
+    },
+    {
+      "id": "generic_red_silver_ribbon_red_plus_silver",
+      "path": "/reference-library/generic/red-silver/ribbon_red+silver.png",
+      "category": "generic_assets_and_numericals",
+      "material": "red_silver_metallic_chrome",
+      "subject_type": "ribbon red silver",
+      "shape_type": "simple_icon",
+      "color_behavior": "red_silver",
+      "complexity": "simple",
+      "angle_id": null,
+      "use_as": [
+        "style_reference"
+      ]
+    },
+    {
+      "id": "generic_red_silver_sandclock_red_plus_silver",
+      "path": "/reference-library/generic/red-silver/sandclock_red+silver.png",
+      "category": "generic_assets_and_numericals",
+      "material": "red_silver_metallic_chrome",
+      "subject_type": "sandclock red silver",
+      "shape_type": "simple_icon",
+      "color_behavior": "red_silver",
+      "complexity": "simple",
+      "angle_id": null,
+      "use_as": [
+        "style_reference"
+      ]
+    },
+    {
+      "id": "generic_red_silver_tech_red_plus_silver",
+      "path": "/reference-library/generic/red-silver/tech_red+silver.png",
+      "category": "generic_assets_and_numericals",
+      "material": "red_silver_metallic_chrome",
+      "subject_type": "tech red silver",
+      "shape_type": "simple_icon",
+      "color_behavior": "red_silver",
+      "complexity": "simple",
+      "angle_id": null,
+      "use_as": [
+        "style_reference"
+      ]
+    },
+    {
+      "id": "generic_red_silver_trading_red_plus_silver",
+      "path": "/reference-library/generic/red-silver/trading_red+silver.png",
+      "category": "generic_assets_and_numericals",
+      "material": "red_silver_metallic_chrome",
+      "subject_type": "trading red silver",
+      "shape_type": "simple_icon",
+      "color_behavior": "red_silver",
+      "complexity": "simple",
+      "angle_id": null,
+      "use_as": [
+        "style_reference"
+      ]
+    },
+    {
+      "id": "generic_red_silver_transfer_trading_red_plus_silver",
+      "path": "/reference-library/generic/red-silver/transfer_trading_red+silver.png",
+      "category": "generic_assets_and_numericals",
+      "material": "red_silver_metallic_chrome",
+      "subject_type": "transfer trading red silver",
+      "shape_type": "simple_icon",
+      "color_behavior": "red_silver",
+      "complexity": "medium",
+      "angle_id": null,
+      "use_as": [
+        "style_reference"
+      ]
+    },
+    {
+      "id": "generic_red_silver_trophy_red_plus_silver",
+      "path": "/reference-library/generic/red-silver/trophy_red+silver.png",
+      "category": "generic_assets_and_numericals",
+      "material": "red_silver_metallic_chrome",
+      "subject_type": "trophy red silver",
+      "shape_type": "simple_icon",
+      "color_behavior": "red_silver",
+      "complexity": "simple",
+      "angle_id": null,
+      "use_as": [
+        "style_reference"
+      ]
+    },
+    {
+      "id": "generic_red_silver_warning_red_plus_silver",
+      "path": "/reference-library/generic/red-silver/warning_red+silver.png",
+      "category": "generic_assets_and_numericals",
+      "material": "red_silver_metallic_chrome",
+      "subject_type": "warning red silver",
+      "shape_type": "simple_icon",
+      "color_behavior": "red_silver",
+      "complexity": "simple",
+      "angle_id": null,
+      "use_as": [
+        "style_reference"
+      ]
+    },
+    {
+      "id": "tiles_chrome_logo_derived_boom_600_chrome",
+      "path": "/reference-library/tiles/chrome-logo/derived_boom_600_chrome.png",
+      "category": "product_social_tiles",
+      "material": "chrome_tile_with_logo",
+      "subject_type": "derived boom 600 chrome",
+      "shape_type": "tile",
+      "color_behavior": "chrome_base",
+      "complexity": "medium",
+      "angle_id": null,
+      "use_as": [
+        "style_reference"
+      ]
+    },
+    {
+      "id": "tiles_chrome_logo_derived_range_break_200_chrome",
+      "path": "/reference-library/tiles/chrome-logo/derived_range_break_200_chrome.png",
+      "category": "product_social_tiles",
+      "material": "chrome_tile_with_logo",
+      "subject_type": "derived range break 200 chrome",
+      "shape_type": "tile",
+      "color_behavior": "chrome_base",
+      "complexity": "medium",
+      "angle_id": null,
+      "use_as": [
+        "style_reference"
+      ]
+    },
+    {
+      "id": "tiles_chrome_logo_derived_volatility_10_1s_chrome",
+      "path": "/reference-library/tiles/chrome-logo/derived_volatility_10_1s_chrome.png",
+      "category": "product_social_tiles",
+      "material": "chrome_tile_with_logo",
+      "subject_type": "derived volatility 10 1s chrome",
+      "shape_type": "tile",
+      "color_behavior": "chrome_base",
+      "complexity": "medium",
+      "angle_id": null,
+      "use_as": [
+        "style_reference"
+      ]
+    },
+    {
+      "id": "tiles_chrome_logo_derived_volatility_over_crash_chrome",
+      "path": "/reference-library/tiles/chrome-logo/derived_volatility_over_crash_chrome.png",
+      "category": "product_social_tiles",
+      "material": "chrome_tile_with_logo",
+      "subject_type": "derived volatility over crash chrome",
+      "shape_type": "tile",
+      "color_behavior": "chrome_base",
+      "complexity": "medium",
+      "angle_id": null,
+      "use_as": [
+        "style_reference"
+      ]
+    },
+    {
+      "id": "tiles_chrome_logo_illustrative_stocks",
+      "path": "/reference-library/tiles/chrome-logo/illustrative_stocks.png",
+      "category": "product_social_tiles",
+      "material": "chrome_tile_with_logo",
+      "subject_type": "illustrative stocks",
+      "shape_type": "tile",
+      "color_behavior": "chrome_base",
+      "complexity": "medium",
+      "angle_id": null,
+      "use_as": [
+        "style_reference"
+      ]
+    },
+    {
+      "id": "tiles_multicolor_ctrader_multicolor",
+      "path": "/reference-library/tiles/multicolor/ctrader_multicolor.png",
+      "category": "product_social_tiles",
+      "material": "multicolored_tile",
+      "subject_type": "ctrader multicolor",
+      "shape_type": "tile",
+      "color_behavior": "multicolor",
+      "complexity": "simple",
+      "angle_id": null,
+      "use_as": [
+        "style_reference"
+      ]
+    },
+    {
+      "id": "tiles_multicolor_dbot_multicolor",
+      "path": "/reference-library/tiles/multicolor/dbot_multicolor.png",
+      "category": "product_social_tiles",
+      "material": "multicolored_tile",
+      "subject_type": "dbot multicolor",
+      "shape_type": "tile",
+      "color_behavior": "multicolor",
+      "complexity": "simple",
+      "angle_id": null,
+      "use_as": [
+        "style_reference"
+      ]
+    },
+    {
+      "id": "tiles_multicolor_instagram_multicolor",
+      "path": "/reference-library/tiles/multicolor/instagram_multicolor.png",
+      "category": "product_social_tiles",
+      "material": "multicolored_tile",
+      "subject_type": "instagram multicolor",
+      "shape_type": "tile",
+      "color_behavior": "multicolor",
+      "complexity": "simple",
+      "angle_id": null,
+      "use_as": [
+        "style_reference"
+      ]
+    },
+    {
+      "id": "tiles_multicolor_mt5_multicolor",
+      "path": "/reference-library/tiles/multicolor/MT5_multicolor.png",
+      "category": "product_social_tiles",
+      "material": "multicolored_tile",
+      "subject_type": "mt5 multicolor",
+      "shape_type": "tile",
+      "color_behavior": "multicolor",
+      "complexity": "simple",
+      "angle_id": null,
+      "use_as": [
+        "style_reference"
+      ]
+    },
+    {
+      "id": "tiles_multicolor_options_multicolor",
+      "path": "/reference-library/tiles/multicolor/options_multicolor.png",
+      "category": "product_social_tiles",
+      "material": "multicolored_tile",
+      "subject_type": "options multicolor",
+      "shape_type": "tile",
+      "color_behavior": "multicolor",
+      "complexity": "simple",
+      "angle_id": null,
+      "use_as": [
+        "style_reference"
+      ]
+    },
+    {
+      "id": "tiles_multicolor_tiktok_multicolor",
+      "path": "/reference-library/tiles/multicolor/tiktok_multicolor.png",
+      "category": "product_social_tiles",
+      "material": "multicolored_tile",
+      "subject_type": "tiktok multicolor",
+      "shape_type": "tile",
+      "color_behavior": "multicolor",
+      "complexity": "simple",
+      "angle_id": null,
+      "use_as": [
+        "style_reference"
+      ]
+    },
+    {
+      "id": "tiles_multicolor_whatsapp_multicolor",
+      "path": "/reference-library/tiles/multicolor/whatsapp_multicolor.png",
+      "category": "product_social_tiles",
+      "material": "multicolored_tile",
+      "subject_type": "whatsapp multicolor",
+      "shape_type": "tile",
+      "color_behavior": "multicolor",
+      "complexity": "simple",
+      "angle_id": null,
+      "use_as": [
+        "style_reference"
+      ]
+    },
+    {
+      "id": "coins_multicolor_btc_multicolor",
+      "path": "/reference-library/coins/multicolor/BTC_multicolor.png",
+      "category": "crypto_coins",
+      "material": "multicolored_coin",
+      "subject_type": "btc multicolor",
+      "shape_type": "coin",
+      "color_behavior": "multicolor",
+      "complexity": "medium",
+      "angle_id": null,
+      "use_as": [
+        "style_reference"
+      ]
+    },
+    {
+      "id": "coins_multicolor_doge_multicolor",
+      "path": "/reference-library/coins/multicolor/DOGE_multicolor.png",
+      "category": "crypto_coins",
+      "material": "multicolored_coin",
+      "subject_type": "doge multicolor",
+      "shape_type": "coin",
+      "color_behavior": "multicolor",
+      "complexity": "medium",
+      "angle_id": null,
+      "use_as": [
+        "style_reference"
+      ]
+    },
+    {
+      "id": "coins_multicolor_matic_multicolor",
+      "path": "/reference-library/coins/multicolor/MATIC_multicolor.png",
+      "category": "crypto_coins",
+      "material": "multicolored_coin",
+      "subject_type": "matic multicolor",
+      "shape_type": "coin",
+      "color_behavior": "multicolor",
+      "complexity": "medium",
+      "angle_id": null,
+      "use_as": [
+        "style_reference"
+      ]
+    },
+    {
+      "id": "coins_multicolor_shiba_multicolor",
+      "path": "/reference-library/coins/multicolor/SHIBA_multicolor.png",
+      "category": "crypto_coins",
+      "material": "multicolored_coin",
+      "subject_type": "shiba multicolor",
+      "shape_type": "coin",
+      "color_behavior": "multicolor",
+      "complexity": "medium",
+      "angle_id": null,
+      "use_as": [
+        "style_reference"
+      ]
+    },
+    {
+      "id": "coins_multicolor_sol_multicolor",
+      "path": "/reference-library/coins/multicolor/SOL_multicolor.png",
+      "category": "crypto_coins",
+      "material": "multicolored_coin",
+      "subject_type": "sol multicolor",
+      "shape_type": "coin",
+      "color_behavior": "multicolor",
+      "complexity": "medium",
+      "angle_id": null,
+      "use_as": [
+        "style_reference"
+      ]
+    },
+    {
+      "id": "coins_multicolor_usoil_multicolor",
+      "path": "/reference-library/coins/multicolor/USOil_multicolor.png",
+      "category": "crypto_coins",
+      "material": "multicolored_coin",
+      "subject_type": "usoil multicolor",
+      "shape_type": "coin",
+      "color_behavior": "multicolor",
+      "complexity": "medium",
+      "angle_id": null,
+      "use_as": [
+        "style_reference"
+      ]
+    },
+    {
+      "id": "coins_multicolor_xrp_multicolor",
+      "path": "/reference-library/coins/multicolor/XRP_multicolor.png",
+      "category": "crypto_coins",
+      "material": "multicolored_coin",
+      "subject_type": "xrp multicolor",
+      "shape_type": "coin",
+      "color_behavior": "multicolor",
+      "complexity": "medium",
+      "angle_id": null,
+      "use_as": [
+        "style_reference"
+      ]
+    },
+    {
+      "id": "markets_multicolor_amzn_multicolor",
+      "path": "/reference-library/markets/multicolor/AMZN_multicolor.png",
+      "category": "logos_stocks_markets",
+      "material": "metallic_chrome_base",
+      "subject_type": "amzn multicolor",
+      "shape_type": "market_asset",
+      "color_behavior": "multicolor",
+      "complexity": "medium",
+      "angle_id": null,
+      "use_as": [
+        "style_reference"
+      ]
+    },
+    {
+      "id": "markets_multicolor_derived_eurusd_multicolor",
+      "path": "/reference-library/markets/multicolor/derived_EURUSD_multicolor.png",
+      "category": "logos_stocks_markets",
+      "material": "metallic_chrome_base",
+      "subject_type": "derived eurusd multicolor",
+      "shape_type": "market_asset",
+      "color_behavior": "multicolor",
+      "complexity": "complex",
+      "angle_id": null,
+      "use_as": [
+        "style_reference"
+      ]
+    },
+    {
+      "id": "markets_multicolor_derived_gold_basket_multicolor",
+      "path": "/reference-library/markets/multicolor/derived_gold_basket_multicolor.png",
+      "category": "logos_stocks_markets",
+      "material": "metallic_chrome_base",
+      "subject_type": "derived gold basket multicolor",
+      "shape_type": "market_asset",
+      "color_behavior": "multicolor",
+      "complexity": "complex",
+      "angle_id": null,
+      "use_as": [
+        "style_reference"
+      ]
+    },
+    {
+      "id": "markets_multicolor_gold_bar_multicolor",
+      "path": "/reference-library/markets/multicolor/gold_bar_multicolor.png",
+      "category": "logos_stocks_markets",
+      "material": "metallic_chrome_base",
+      "subject_type": "gold bar multicolor",
+      "shape_type": "market_asset",
+      "color_behavior": "multicolor",
+      "complexity": "medium",
+      "angle_id": null,
+      "use_as": [
+        "style_reference"
+      ]
+    },
+    {
+      "id": "markets_multicolor_jpy_225_multicolor",
+      "path": "/reference-library/markets/multicolor/JPY _225_multicolor.png",
+      "category": "logos_stocks_markets",
+      "material": "metallic_chrome_base",
+      "subject_type": "jpy 225 multicolor",
+      "shape_type": "market_asset",
+      "color_behavior": "multicolor",
+      "complexity": "medium",
+      "angle_id": null,
+      "use_as": [
+        "style_reference"
+      ]
+    },
+    {
+      "id": "markets_multicolor_nvidia_multicolor",
+      "path": "/reference-library/markets/multicolor/NVIDIA_multicolor.png",
+      "category": "logos_stocks_markets",
+      "material": "metallic_chrome_base",
+      "subject_type": "nvidia multicolor",
+      "shape_type": "market_asset",
+      "color_behavior": "multicolor",
+      "complexity": "medium",
+      "angle_id": null,
+      "use_as": [
+        "style_reference"
+      ]
+    },
+    {
+      "id": "markets_multicolor_us_500_multicolor",
+      "path": "/reference-library/markets/multicolor/US_500_multicolor.png",
+      "category": "logos_stocks_markets",
+      "material": "metallic_chrome_base",
+      "subject_type": "us 500 multicolor",
+      "shape_type": "market_asset",
+      "color_behavior": "multicolor",
+      "complexity": "medium",
+      "angle_id": null,
+      "use_as": [
+        "style_reference"
+      ]
+    },
+    {
+      "id": "markets_multicolor_wall_st_30_multicolor",
+      "path": "/reference-library/markets/multicolor/WALL_ST_30_multicolor.png",
+      "category": "logos_stocks_markets",
+      "material": "metallic_chrome_base",
+      "subject_type": "wall st 30 multicolor",
+      "shape_type": "market_asset",
+      "color_behavior": "multicolor",
+      "complexity": "complex",
+      "angle_id": null,
+      "use_as": [
+        "style_reference"
+      ]
+    }
+  ],
   "schema": {
     "id": "unique reference id",
     "path": "path to PNG reference",
