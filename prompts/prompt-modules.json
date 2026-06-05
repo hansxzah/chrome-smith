@@ -1,0 +1,23 @@
+{
+  "core_identity": "Create a premium Chrome Smith 3D asset. The output must be polished, clean, fintech-oriented, design-ready, isolated, centered, and reusable. Use smooth beveled geometry, controlled chrome reflections, premium studio lighting, and transparent PNG output.",
+  "feature_generate": "Generate a new Chrome Smith asset based on the requested topic.",
+  "feature_reangle": "Recreate the uploaded asset in the selected Chrome Smith angle while preserving its identity, material, colors, text or logo, bevel style, lighting style, and transparent background. Only change the perspective and angle.",
+  "feature_array": "Arrange the provided Chrome Smith assets into the selected composition while preserving each asset's identity, appearance, material, colors, text, and transparency.",
+  "reference_behavior": "Use selected internal references as style anchors only. Match material treatment, bevels, lighting, reflections, shadow softness, and asset treatment. Do not copy the exact subject, logo, text, background artifacts, or unwanted details unless explicitly requested.",
+  "angle_behavior": "Match the selected Chrome Smith angle reference exactly. The selected angle thumbnail is the source of truth. Preserve the same visible sidewall direction, top or bottom tilt, object rotation, extrusion direction, and perspective shown in the selected angle reference. Do not mirror, reverse, swap, or reinterpret the angle.",
+  "output_rules": "Output as a centered transparent PNG with clean edges, enough padding, readable silhouette, and no background artifacts.",
+  "negative_rules": "Do not generate cartoon, clay, plastic, flat vector, grunge, dirty metal, messy reflections, noisy highlights, wrong brand colors, mirrored angles, extra objects, background scenes, or watermarks.",
+  "asset_classifier": "Classify the user prompt into one asset category: generic_assets_and_numericals, product_social_tiles, crypto_coins, or logos_stocks_markets. Prefer the most specific category based on the subject.",
+  "material_classifier": "Infer the material behavior from the prompt and asset category. Use category-specific material rules. For generic assets and numericals, plain metallic chrome and plain red metallic chrome are interchangeable variants.",
+  "generic_assets_and_numericals": "Treat the request as a generic asset or numerical. Use clean standalone 3D icon or number form, readable silhouette, smooth bevels, controlled chrome lighting, and transparent PNG output.",
+  "product_social_tiles": "Treat the request as a product, platform, app, or social media tile. Use a rounded square or softly beveled tile form. Preserve logo recognizability and use either chrome tile with logo or multicolored tile behavior.",
+  "crypto_coins": "Treat the request as a crypto coin. Use circular coin form, beveled rim, centered token symbol, token/logo color behavior, polished lighting, and transparent PNG output.",
+  "logos_stocks_markets": "Treat the request as a logo, stock, commodity, index, forex pair, or market asset. Prioritize recognizability. Shape and color depend on the logo or item. Metallic chrome may be used as the base material.",
+  "material_plain_metallic_chrome": "Use polished silver metallic chrome with white-silver highlights, darker grey sidewall reflections, smooth metallic gradients, reflective bevels, clean extrusion depth, and premium studio lighting.",
+  "material_plain_red_metallic_chrome": "Use glossy red metallic chrome inspired by #ff444f, with deeper red sidewall reflections, chrome-like highlights, smooth bevels, reflective depth, and premium studio lighting. Do not make it flat red or plastic.",
+  "material_red_silver_metallic_chrome": "Use silver chrome as the main material with controlled #ff444f red chrome accents. Keep lighting direction and reflections cohesive across both materials.",
+  "material_chrome_tile_with_logo": "Use a metallic chrome tile base with the logo placed clearly on the tile face. Keep the logo readable and avoid reflections that obscure it.",
+  "material_multicolored_tile": "Use a multicolored beveled tile where the tile color follows the logo or brand color. Preserve logo recognizability while maintaining Chrome Smith lighting and 3D polish.",
+  "material_multicolored_coin": "Use a multicolored 3D coin where the coin color follows the token/logo. Use a circular coin form, beveled rim, centered symbol, and polished lighting.",
+  "material_metallic_chrome_base": "Use metallic chrome as the base, rim, frame, badge, or object body when appropriate. Add color only when needed for logo, market, or item recognition."
+}
