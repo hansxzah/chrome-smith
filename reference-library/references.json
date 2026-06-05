@@ -1,0 +1,17 @@
+{
+  "references": [],
+  "schema": {
+    "id": "unique reference id",
+    "path": "path to PNG reference",
+    "category": "generic_assets_and_numericals | product_social_tiles | crypto_coins | logos_stocks_markets",
+    "material": "plain_metallic_chrome | plain_red_metallic_chrome | red_silver_metallic_chrome | chrome_tile_with_logo | multicolored_tile | multicolored_coin | metallic_chrome_base",
+    "subject_type": "short description of subject",
+    "shape_type": "simple_icon | numerical | tile | coin | market_asset | logo_asset",
+    "color_behavior": "silver_chrome | red_chrome | red_silver | multicolor | chrome_base",
+    "complexity": "simple | medium | complex",
+    "angle_id": "optional angle id if known",
+    "use_as": [
+      "style_reference"
+    ]
+  }
+}

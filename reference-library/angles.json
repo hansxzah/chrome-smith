@@ -1,0 +1,108 @@
+{
+  "angles": [
+    {
+      "id": "angle_center",
+      "label": "Center",
+      "path": "/reference-library/angles/angle_center.png",
+      "type": "angle_reference",
+      "promptDirection": "Match the selected Center Chrome Smith angle reference exactly. Use a centered front-facing view with minimal perspective distortion. Do not add extra rotation, tilt, or sidewall depth unless shown in the reference.",
+      "validationNote": "The thumbnail is the source of truth. Do not rely on the text label alone."
+    },
+    {
+      "id": "angle_22_5_left_facing",
+      "label": "22.5° Left Facing",
+      "path": "/reference-library/angles/angle_22_5_left_facing.png",
+      "type": "angle_reference",
+      "promptDirection": "Match the selected Chrome Smith angle reference exactly. Preserve the same visible sidewall direction, top or bottom tilt, object rotation, extrusion direction, and perspective shown in the thumbnail. Do not mirror, reverse, swap, or reinterpret the angle.",
+      "validationNote": "The thumbnail is the source of truth. Do not rely on the text label alone."
+    },
+    {
+      "id": "angle_22_5_right_facing",
+      "label": "22.5° Right Facing",
+      "path": "/reference-library/angles/angle_22_5_right_facing.png",
+      "type": "angle_reference",
+      "promptDirection": "Match the selected Chrome Smith angle reference exactly. Preserve the same visible sidewall direction, top or bottom tilt, object rotation, extrusion direction, and perspective shown in the thumbnail. Do not mirror, reverse, swap, or reinterpret the angle.",
+      "validationNote": "The thumbnail is the source of truth. Do not rely on the text label alone."
+    },
+    {
+      "id": "angle_45_left_facing",
+      "label": "45° Left Facing",
+      "path": "/reference-library/angles/angle_45_left_facing.png",
+      "type": "angle_reference",
+      "promptDirection": "Match the selected Chrome Smith angle reference exactly. Preserve the same visible sidewall direction, top or bottom tilt, object rotation, extrusion direction, and perspective shown in the thumbnail. Do not mirror, reverse, swap, or reinterpret the angle.",
+      "validationNote": "The thumbnail is the source of truth. Do not rely on the text label alone."
+    },
+    {
+      "id": "angle_45_right_facing",
+      "label": "45° Right Facing",
+      "path": "/reference-library/angles/angle_45_right_facing.png",
+      "type": "angle_reference",
+      "promptDirection": "Match the selected Chrome Smith angle reference exactly. Preserve the same visible sidewall direction, top or bottom tilt, object rotation, extrusion direction, and perspective shown in the thumbnail. Do not mirror, reverse, swap, or reinterpret the angle.",
+      "validationNote": "The thumbnail is the source of truth. Do not rely on the text label alone."
+    },
+    {
+      "id": "angle_22_5_left_up",
+      "label": "22.5° Left + Up Facing",
+      "path": "/reference-library/angles/angle_22_5_left_up.png",
+      "type": "angle_reference",
+      "promptDirection": "Match the selected Chrome Smith angle reference exactly. Preserve the same visible sidewall direction, top or bottom tilt, object rotation, extrusion direction, and perspective shown in the thumbnail. Do not mirror, reverse, swap, or reinterpret the angle.",
+      "validationNote": "The thumbnail is the source of truth. Do not rely on the text label alone."
+    },
+    {
+      "id": "angle_22_5_right_up",
+      "label": "22.5° Right + Up Facing",
+      "path": "/reference-library/angles/angle_22_5_right_up.png",
+      "type": "angle_reference",
+      "promptDirection": "Match the selected Chrome Smith angle reference exactly. Preserve the same visible sidewall direction, top or bottom tilt, object rotation, extrusion direction, and perspective shown in the thumbnail. Do not mirror, reverse, swap, or reinterpret the angle.",
+      "validationNote": "The thumbnail is the source of truth. Do not rely on the text label alone."
+    },
+    {
+      "id": "angle_45_left_up",
+      "label": "45° Left + Up Facing",
+      "path": "/reference-library/angles/angle_45_left_up.png",
+      "type": "angle_reference",
+      "promptDirection": "Match the selected Chrome Smith angle reference exactly. Preserve the same visible sidewall direction, top or bottom tilt, object rotation, extrusion direction, and perspective shown in the thumbnail. Do not mirror, reverse, swap, or reinterpret the angle.",
+      "validationNote": "The thumbnail is the source of truth. Do not rely on the text label alone."
+    },
+    {
+      "id": "angle_45_right_up",
+      "label": "45° Right + Up Facing",
+      "path": "/reference-library/angles/angle_45_right_up.png",
+      "type": "angle_reference",
+      "promptDirection": "Match the selected Chrome Smith angle reference exactly. Preserve the same visible sidewall direction, top or bottom tilt, object rotation, extrusion direction, and perspective shown in the thumbnail. Do not mirror, reverse, swap, or reinterpret the angle.",
+      "validationNote": "The thumbnail is the source of truth. Do not rely on the text label alone."
+    },
+    {
+      "id": "angle_22_5_left_down",
+      "label": "22.5° Left + Down Facing",
+      "path": "/reference-library/angles/angle_22_5_left_down.png",
+      "type": "angle_reference",
+      "promptDirection": "Match the selected Chrome Smith angle reference exactly. Preserve the same visible sidewall direction, top or bottom tilt, object rotation, extrusion direction, and perspective shown in the thumbnail. Do not mirror, reverse, swap, or reinterpret the angle.",
+      "validationNote": "The thumbnail is the source of truth. Do not rely on the text label alone."
+    },
+    {
+      "id": "angle_22_5_right_down",
+      "label": "22.5° Right + Down Facing",
+      "path": "/reference-library/angles/angle_22_5_right_down.png",
+      "type": "angle_reference",
+      "promptDirection": "Match the selected Chrome Smith angle reference exactly. Preserve the same visible sidewall direction, top or bottom tilt, object rotation, extrusion direction, and perspective shown in the thumbnail. Do not mirror, reverse, swap, or reinterpret the angle.",
+      "validationNote": "The thumbnail is the source of truth. Do not rely on the text label alone."
+    },
+    {
+      "id": "angle_45_left_down",
+      "label": "45° Left + Down Facing",
+      "path": "/reference-library/angles/angle_45_left_down.png",
+      "type": "angle_reference",
+      "promptDirection": "Match the selected Chrome Smith angle reference exactly. Preserve the same visible sidewall direction, top or bottom tilt, object rotation, extrusion direction, and perspective shown in the thumbnail. Do not mirror, reverse, swap, or reinterpret the angle.",
+      "validationNote": "The thumbnail is the source of truth. Do not rely on the text label alone."
+    },
+    {
+      "id": "angle_45_right_down",
+      "label": "45° Right + Down Facing",
+      "path": "/reference-library/angles/angle_45_right_down.png",
+      "type": "angle_reference",
+      "promptDirection": "Match the selected Chrome Smith angle reference exactly. Preserve the same visible sidewall direction, top or bottom tilt, object rotation, extrusion direction, and perspective shown in the thumbnail. Do not mirror, reverse, swap, or reinterpret the angle.",
+      "validationNote": "The thumbnail is the source of truth. Do not rely on the text label alone."
+    }
+  ]
+}
