@@ -295,7 +295,7 @@
               <div class="angle-row"><button class="angle-btn"><i class="ti ti-arrow-left"></i>Side L</button><button class="angle-btn"><i class="ti ti-box"></i>3/4 L</button><button class="angle-btn active"><i class="ti ti-square"></i>Front</button><button class="angle-btn"><i class="ti ti-box"></i>3/4 R</button><button class="angle-btn"><i class="ti ti-arrow-right"></i>Side R</button></div>
               <div class="angle-row"><button class="angle-btn"><i class="ti ti-box"></i>Bot L</button><button class="angle-btn"><i class="ti ti-arrow-down"></i>Bot CL</button><button class="angle-btn"><i class="ti ti-arrow-down"></i>Bot CR</button><button class="angle-btn"><i class="ti ti-box"></i>Bot R</button></div>
               </div>
-              <div class="generate-options"><div class="card-title">Resolution</div><div class="resolution" data-single="pill"><button class="pill">2K</button><button class="pill active">4K</button></div></div>
+              <div class="generate-options"><div class="card-title">Resolution</div><div class="resolution" data-single="pill"><button class="pill active" data-resolution="1K">1K</button><button class="pill" data-resolution="2K">2K</button></div></div>
               <label class="transparent-option"><span>Transparent Background</span><span class="transparent-toggle"><input type="checkbox" id="transparent-background" checked><span></span></span></label>
               <button class="primary-btn generate-submit" data-generate data-live><i class="ti ti-sparkles"></i> Generate</button>
             </div>
@@ -309,7 +309,7 @@
         <header class="page-head"><div><h1>Re-angle</h1><p class="subtitle">Recreate an existing object from a fresh perspective.</p></div><button class="theme-btn"><i class="ti ti-moon"></i><span>Dark</span></button></header>
         <div class="workspace">
           <div class="left-stack">
-            <div class="card"><div class="card-title">Upload object</div><label class="dropzone"><input type="file" accept="image/*"><i class="ti ti-upload"></i><span class="drop-title">Drop your 3D object here</span><div class="drop-sub">PNG, JPG or WebP up to 20MB</div></label><div class="thumbs"></div><div class="card-title form-heading" style="margin-top:16px;">Choose your angle</div><div class="angle-layout" data-single="angle"><div class="angle-row"><button class="angle-btn"><i class="ti ti-box"></i>Top L</button><button class="angle-btn"><i class="ti ti-arrow-up"></i>Top CL</button><button class="angle-btn"><i class="ti ti-arrow-up"></i>Top CR</button><button class="angle-btn"><i class="ti ti-box"></i>Top R</button></div><div class="angle-row"><button class="angle-btn"><i class="ti ti-arrow-left"></i>Side L</button><button class="angle-btn"><i class="ti ti-box"></i>3/4 L</button><button class="angle-btn active"><i class="ti ti-square"></i>Front</button><button class="angle-btn"><i class="ti ti-box"></i>3/4 R</button><button class="angle-btn"><i class="ti ti-arrow-right"></i>Side R</button></div><div class="angle-row"><button class="angle-btn"><i class="ti ti-box"></i>Bot L</button><button class="angle-btn"><i class="ti ti-arrow-down"></i>Bot CL</button><button class="angle-btn"><i class="ti ti-arrow-down"></i>Bot CR</button><button class="angle-btn"><i class="ti ti-box"></i>Bot R</button></div></div><p class="helper">Material, lighting and color remain consistent while the perspective changes.</p><div class="generate-options"><div class="card-title">Resolution</div><div class="resolution" data-single="pill"><button class="pill">2K</button><button class="pill active">4K</button></div></div><button class="primary-btn generate-submit" data-generate><i class="ti ti-view-360-arrow"></i> Re-angle</button></div>
+            <div class="card"><div class="card-title">Upload object</div><label class="dropzone"><input type="file" accept="image/*"><i class="ti ti-upload"></i><span class="drop-title">Drop your 3D object here</span><div class="drop-sub">PNG, JPG or WebP up to 20MB</div></label><div class="thumbs"></div><div class="card-title form-heading" style="margin-top:16px;">Choose your angle</div><div class="angle-layout" data-single="angle"><div class="angle-row"><button class="angle-btn"><i class="ti ti-box"></i>Top L</button><button class="angle-btn"><i class="ti ti-arrow-up"></i>Top CL</button><button class="angle-btn"><i class="ti ti-arrow-up"></i>Top CR</button><button class="angle-btn"><i class="ti ti-box"></i>Top R</button></div><div class="angle-row"><button class="angle-btn"><i class="ti ti-arrow-left"></i>Side L</button><button class="angle-btn"><i class="ti ti-box"></i>3/4 L</button><button class="angle-btn active"><i class="ti ti-square"></i>Front</button><button class="angle-btn"><i class="ti ti-box"></i>3/4 R</button><button class="angle-btn"><i class="ti ti-arrow-right"></i>Side R</button></div><div class="angle-row"><button class="angle-btn"><i class="ti ti-box"></i>Bot L</button><button class="angle-btn"><i class="ti ti-arrow-down"></i>Bot CL</button><button class="angle-btn"><i class="ti ti-arrow-down"></i>Bot CR</button><button class="angle-btn"><i class="ti ti-box"></i>Bot R</button></div></div><p class="helper">Material, lighting and color remain consistent while the perspective changes.</p><div class="generate-options"><div class="card-title">Resolution</div><div class="resolution" data-single="pill"><button class="pill active" data-resolution="1K">1K</button><button class="pill" data-resolution="2K">2K</button></div></div><button class="primary-btn generate-submit" data-generate><i class="ti ti-view-360-arrow"></i> Re-angle</button></div>
           </div>
           <div class="card output-card"><div class="card-title">Output preview</div><div class="output-zone" data-output><div class="empty-state"><div class="empty-icon"><i class="ti ti-view-360-arrow"></i></div><div class="empty-title">Your re-angled object appears here</div><div class="empty-sub">Upload an object and choose a new camera angle</div></div><div class="loading"><div class="loader"></div>Rebuilding perspective...</div><div class="result-art"><div class="orb-shadow"></div><div class="orb"><i class="ti ti-rocket"></i></div></div><img class="generated-image" alt="Re-angled 3D object"><div class="stage-badges"><span>PNG</span><span>TRANSPARENT</span></div></div></div>
         </div>
@@ -320,7 +320,7 @@
         <header class="page-head"><div><h1>Array</h1><p class="subtitle">Arrange one or more 3D assets into a composed visual.</p></div><button class="theme-btn"><i class="ti ti-moon"></i><span>Dark</span></button></header>
         <div class="workspace">
           <div class="left-stack">
-            <div class="card"><div class="card-title">Upload objects</div><label class="dropzone"><input type="file" accept="image/*" multiple><i class="ti ti-upload"></i><span class="drop-title">Drop one or more objects here</span><div class="drop-sub">PNG, JPG or WebP up to 20MB each</div></label><div class="thumbs"></div><p class="helper">Use one object for a repeating pattern or multiple objects for a mixed composition.</p><div class="card-title form-heading" style="margin-top:16px;">Array style</div><div class="array-grid" data-single="array-btn"><button class="array-btn active"><i class="ti ti-grid-dots"></i>Grid</button><button class="array-btn"><i class="ti ti-arrows-shuffle"></i>Scatter</button><button class="array-btn"><i class="ti ti-trending-up"></i>Diagonal</button><button class="array-btn"><i class="ti ti-wave-sine"></i>Wave</button></div><div class="generate-options"><div class="card-title">Resolution</div><div class="resolution" data-single="pill"><button class="pill">2K</button><button class="pill active">4K</button></div></div><button class="primary-btn generate-submit" data-generate><i class="ti ti-grid-dots"></i> Create array</button></div>
+            <div class="card"><div class="card-title">Upload objects</div><label class="dropzone"><input type="file" accept="image/*" multiple><i class="ti ti-upload"></i><span class="drop-title">Drop one or more objects here</span><div class="drop-sub">PNG, JPG or WebP up to 20MB each</div></label><div class="thumbs"></div><p class="helper">Use one object for a repeating pattern or multiple objects for a mixed composition.</p><div class="card-title form-heading" style="margin-top:16px;">Array style</div><div class="array-grid" data-single="array-btn"><button class="array-btn active"><i class="ti ti-grid-dots"></i>Grid</button><button class="array-btn"><i class="ti ti-arrows-shuffle"></i>Scatter</button><button class="array-btn"><i class="ti ti-trending-up"></i>Diagonal</button><button class="array-btn"><i class="ti ti-wave-sine"></i>Wave</button></div><div class="generate-options"><div class="card-title">Resolution</div><div class="resolution" data-single="pill"><button class="pill active" data-resolution="1K">1K</button><button class="pill" data-resolution="2K">2K</button></div></div><button class="primary-btn generate-submit" data-generate><i class="ti ti-grid-dots"></i> Create array</button></div>
           </div>
           <div class="card output-card"><div class="card-title">Output preview</div><div class="output-zone" data-output><div class="empty-state"><div class="empty-icon"><i class="ti ti-grid-dots"></i></div><div class="empty-title">Your composition appears here</div><div class="empty-sub">Upload assets and choose an arrangement</div></div><div class="loading"><div class="loader"></div>Composing array...</div><div class="result-art"><div class="orb-shadow"></div><div class="orb"><i class="ti ti-grid-dots"></i></div></div><img class="generated-image" alt="3D array composition"><div class="stage-badges"><span>PNG</span><span>TRANSPARENT</span></div></div></div>
         </div>
@@ -386,18 +386,18 @@
         const angle = document.querySelector("#generate .angle-btn.active").textContent.trim();
         const description = document.querySelector("#prompt").value.trim();
         if (!description) throw new Error("Enter a prompt before generating.");
-        const resolution = document.querySelector("#generate .resolution .pill.active").textContent.trim();
+        const resolution = getSelectedResolution(document.querySelector("#generate"));
         const transparentBackground = document.querySelector("#transparent-background").checked;
-        const backgroundInstruction = transparentBackground ? "Isolated 3D object with a native transparent background." : "Polished 3D object with an appropriate background.";
-        const prompt = `${description}. Camera angle: ${angle}. ${backgroundInstruction}`;
-        const response = await fetch("/api/generate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ prompt, resolution, transparentBackground }) });
+        const selectedAngleId = document.querySelector("#generate .angle-btn.active")?.dataset.angleId || "angle_center";
+        const response = await fetch("/api/generate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ prompt: description, selectedAngleId, resolution, transparentBackground }) });
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || "Generation failed.");
+        const outputImage = await prepareResolutionOutput(data.image, resolution);
         const image = output.querySelector(".generated-image");
-        image.src = data.image;
+        image.src = outputImage.image;
         image.classList.add("show");
         output.querySelector("[data-background-badge]").textContent = transparentBackground ? "TRANSPARENT" : "AUTO BG";
-        await addAsset({ type: "generate", image: data.image, prompt: description, action: angle, settings: { resolution, transparentBackground } });
+        await addAsset({ type: "generate", image: outputImage.image, prompt: description, action: angle, settings: { resolution, transparentBackground, actualSize: outputImage.size, outputMethod: outputImage.method } });
       } catch (error) {
         const message = output.querySelector(".output-error");
         message.textContent = error.message;
@@ -458,13 +458,62 @@
     function getUploadedSources(page) {
       return [...page.querySelectorAll(".thumb img")].map(image => image.src);
     }
+    function getSelectedResolution(page) {
+      const button = page.querySelector(".resolution .pill.active");
+      return button?.dataset.resolution || "1K";
+    }
+    function loadImageForCanvas(source) {
+      return new Promise((resolve, reject) => {
+        let objectUrl = "";
+        const image = new Image();
+        image.onload = () => {
+          image.dataset.objectUrl = objectUrl;
+          resolve(image);
+        };
+        image.onerror = () => {
+          if (objectUrl) URL.revokeObjectURL(objectUrl);
+          reject(new Error("Could not read generated image for resolution output."));
+        };
+        if (source.startsWith("data:")) {
+          image.src = source;
+          return;
+        }
+        fetch(`/api/download?url=${encodeURIComponent(source)}`)
+          .then(response => {
+            if (!response.ok) throw new Error("Could not prepare generated image.");
+            return response.blob();
+          })
+          .then(blob => {
+            objectUrl = URL.createObjectURL(blob);
+            image.src = objectUrl;
+          })
+          .catch(() => reject(new Error("Could not read generated image for resolution output.")));
+      });
+    }
+    async function prepareResolutionOutput(source, resolution) {
+      const target = resolution === "2K" ? 2048 : 1024;
+      const image = await loadImageForCanvas(source);
+      if (image.naturalWidth === target && image.naturalHeight === target) {
+        if (image.dataset.objectUrl) URL.revokeObjectURL(image.dataset.objectUrl);
+        return { image: source, size: `${image.naturalWidth}x${image.naturalHeight}`, method: resolution === "2K" ? "Upscaled" : "Native" };
+      }
+      const canvas = document.createElement("canvas");
+      canvas.width = canvas.height = target;
+      const context = canvas.getContext("2d");
+      context.clearRect(0, 0, target, target);
+      context.imageSmoothingEnabled = true;
+      context.imageSmoothingQuality = "high";
+      context.drawImage(image, 0, 0, target, target);
+      if (image.dataset.objectUrl) URL.revokeObjectURL(image.dataset.objectUrl);
+      return { image: canvas.toDataURL("image/png"), size: `${target}x${target}`, method: resolution === "2K" ? "Browser upscaled" : "Native GPT Image" };
+    }
     function getAssetAction(page) {
       if (page.id === "reangle") return page.querySelector(".angle-btn.active").textContent.trim();
       if (page.id === "array") return page.querySelector(".array-btn.active").textContent.trim();
       return "";
     }
     function getAssetSettings(page) {
-      const resolution = page.querySelector(".resolution .pill.active")?.textContent.trim() || "4K";
+      const resolution = getSelectedResolution(page);
       return page.id === "array" ? { layout: getAssetAction(page), sourceCount: getUploadedSources(page).length, resolution } : { resolution };
     }
     async function addAsset(asset) {

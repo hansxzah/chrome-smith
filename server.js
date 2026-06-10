@@ -2,11 +2,17 @@ const fs = require("fs");
 const http = require("http");
 const https = require("https");
 const path = require("path");
+const { buildPrompt } = require("./utils/promptBuilder");
 
 const ROOT = __dirname;
 const PORT = Number(process.env.PORT || 3000);
 const ENV_FILE = path.join(ROOT, "ChromeSmithKey.env");
 const DOWNLOAD_TTL = 5 * 60 * 1000;
+const API_IMAGE_SIZE = "1024x1024";
+const RESOLUTION_TARGETS = {
+  "1K": "1024x1024",
+  "2K": "2048x2048"
+};
 const downloads = new Map();
 
 function loadEnv(file) {
@@ -63,6 +69,16 @@ function supportsTransparentBackground(model) {
   return ["gpt-image-1", "gpt-image-1.5"].includes(model);
 }
 
+function getResolutionMetadata(resolution) {
+  const targetSize = RESOLUTION_TARGETS[resolution];
+  if (!targetSize) throw new Error("Choose a supported resolution.");
+  return {
+    requestedResolution: resolution,
+    requestedApiSize: API_IMAGE_SIZE,
+    targetSize
+  };
+}
+
 function requestImage(prompt, resolution, transparentBackground) {
   return new Promise((resolve, reject) => {
     const apiBase = process.env.API_BASE_URL;
@@ -80,9 +96,9 @@ function requestImage(prompt, resolution, transparentBackground) {
     const endpoint = new URL(`${apiBase.replace(/\/$/, "")}/images/generations`);
     const body = {
       model,
-      prompt: `${prompt} Target output resolution: ${resolution}.`,
+      prompt,
       n: 1,
-      size: "1024x1024",
+      size: API_IMAGE_SIZE,
       output_format: "png",
       quality: transparentBackground ? "high" : "auto"
     };
@@ -191,21 +207,42 @@ const server = http.createServer(async (request, response) => {
 
   if (request.method === "POST" && request.url === "/api/generate") {
     try {
-      const { prompt, resolution = "4K", transparentBackground = true } = await readJson(request);
+      const { prompt, selectedAngleId = "angle_center", resolution = "1K", transparentBackground = true } = await readJson(request);
       if (typeof prompt !== "string" || !prompt.trim()) {
         json(response, 400, { error: "Enter a prompt before generating." });
         return;
       }
-      if (!["2K", "4K"].includes(resolution)) {
-        json(response, 400, { error: "Choose a supported resolution." });
-        return;
-      }
+      const resolutionMetadata = getResolutionMetadata(resolution);
       if (typeof transparentBackground !== "boolean") {
         json(response, 400, { error: "Transparent background must be enabled or disabled." });
         return;
       }
-      const payload = await requestImage(prompt.trim(), resolution, transparentBackground);
-      json(response, 200, { image: getImageSource(payload), resolution, transparentBackground, outputFormat: "png" });
+      const promptPlan = buildPrompt({
+        feature: "generate",
+        userPrompt: prompt.trim(),
+        selectedAngleId
+      });
+      console.log("Generate prompt builder:", {
+        assetCategory: promptPlan.assetCategory,
+        material: promptPlan.material,
+        selectedAngleId: promptPlan.selectedAngle.id,
+        selectedReferenceCount: promptPlan.selectedReferences.length,
+        resolution
+      });
+      const payload = await requestImage(promptPlan.finalPrompt, resolution, transparentBackground);
+      json(response, 200, {
+        image: getImageSource(payload),
+        resolution,
+        ...resolutionMetadata,
+        transparentBackground,
+        outputFormat: "png",
+        promptBuilder: {
+          assetCategory: promptPlan.assetCategory,
+          material: promptPlan.material,
+          selectedAngle: promptPlan.selectedAngle,
+          selectedReferences: promptPlan.selectedReferences
+        }
+      });
     } catch (error) {
       console.error("Generation failed:", error.message);
       json(response, 502, { error: error.message });
