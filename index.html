@@ -92,7 +92,10 @@
       color: var(--faint); border: 1px solid var(--line); border-radius: 9px; background: var(--surface-2);
       font-size: 8px; font-weight: 700; transition: .16s;
     }
+    #generate .angle-btn { flex: 0 0 56px; height: 62px; padding: 5px; line-height: 1.1; }
     .angle-btn i { font-size: 18px; }
+    .angle-thumb { width: 30px; height: 30px; object-fit: contain; display: block; }
+    .angle-label { display: block; max-width: 100%; text-align: center; }
     .angle-btn:hover { color: var(--ink); border-color: var(--faint); }
     .angle-btn.active { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
     .output-card { padding: 16px; }
@@ -290,11 +293,7 @@
               <div class="card-title form-heading">What do you want to generate:</div>
               <div class="prompt-wrap"><textarea id="prompt" placeholder="A liquid chrome rocket with warm red reflections..."></textarea><span class="prompt-hint"><i class="ti ti-sparkles"></i> Style is inferred from your description</span></div>
               <div class="quick-prompts"><button class="quick-prompt">Chrome rocket</button><button class="quick-prompt">Gold bitcoin</button><button class="quick-prompt">Glass heart</button></div>
-              <div class="card-title form-heading" style="margin-top:16px;">Choose your angle</div><div class="angle-layout" data-single="angle">
-              <div class="angle-row"><button class="angle-btn"><i class="ti ti-box"></i>Top L</button><button class="angle-btn"><i class="ti ti-arrow-up"></i>Top CL</button><button class="angle-btn"><i class="ti ti-arrow-up"></i>Top CR</button><button class="angle-btn"><i class="ti ti-box"></i>Top R</button></div>
-              <div class="angle-row"><button class="angle-btn"><i class="ti ti-arrow-left"></i>Side L</button><button class="angle-btn"><i class="ti ti-box"></i>3/4 L</button><button class="angle-btn active"><i class="ti ti-square"></i>Front</button><button class="angle-btn"><i class="ti ti-box"></i>3/4 R</button><button class="angle-btn"><i class="ti ti-arrow-right"></i>Side R</button></div>
-              <div class="angle-row"><button class="angle-btn"><i class="ti ti-box"></i>Bot L</button><button class="angle-btn"><i class="ti ti-arrow-down"></i>Bot CL</button><button class="angle-btn"><i class="ti ti-arrow-down"></i>Bot CR</button><button class="angle-btn"><i class="ti ti-box"></i>Bot R</button></div>
-              </div>
+              <div class="card-title form-heading" style="margin-top:16px;">Choose your angle</div><div class="angle-layout" data-single="angle" data-generate-angle-grid></div>
               <div class="generate-options"><div class="card-title">Resolution</div><div class="resolution" data-single="pill"><button class="pill active" data-resolution="1K">1K</button><button class="pill" data-resolution="2K">2K</button></div></div>
               <label class="transparent-option"><span>Transparent Background</span><span class="transparent-toggle"><input type="checkbox" id="transparent-background" checked><span></span></span></label>
               <button class="primary-btn generate-submit" data-generate data-live><i class="ti ti-sparkles"></i> Generate</button>
@@ -338,6 +337,88 @@
     let selectedAssetId = null;
     let libraryFilter = "all";
     const checkedAssetIds = new Set();
+    const FALLBACK_GENERATE_ANGLES = [
+      { id: "angle_center", label: "Center", path: "/reference-library/angles/angle_center.png", promptDirection: "Match the selected Center Chrome Smith angle reference exactly. Use a centered front-facing view with minimal perspective distortion. Do not add extra rotation, tilt, or sidewall depth unless shown in the reference.", validationNote: "The thumbnail is the source of truth. Do not rely on the text label alone." },
+      { id: "angle_22_5_left_facing", label: "22.5° Left Facing", path: "/reference-library/angles/angle_22_5_left_facing.png", promptDirection: "Match the selected Chrome Smith angle reference exactly. Preserve the same visible sidewall direction, top or bottom tilt, object rotation, extrusion direction, and perspective shown in the thumbnail. Do not mirror, reverse, swap, or reinterpret the angle.", validationNote: "The thumbnail is the source of truth. Do not rely on the text label alone." },
+      { id: "angle_22_5_right_facing", label: "22.5° Right Facing", path: "/reference-library/angles/angle_22_5_right_facing.png", promptDirection: "Match the selected Chrome Smith angle reference exactly. Preserve the same visible sidewall direction, top or bottom tilt, object rotation, extrusion direction, and perspective shown in the thumbnail. Do not mirror, reverse, swap, or reinterpret the angle.", validationNote: "The thumbnail is the source of truth. Do not rely on the text label alone." },
+      { id: "angle_45_left_facing", label: "45° Left Facing", path: "/reference-library/angles/angle_45_left_facing.png", promptDirection: "Match the selected Chrome Smith angle reference exactly. Preserve the same visible sidewall direction, top or bottom tilt, object rotation, extrusion direction, and perspective shown in the thumbnail. Do not mirror, reverse, swap, or reinterpret the angle.", validationNote: "The thumbnail is the source of truth. Do not rely on the text label alone." },
+      { id: "angle_45_right_facing", label: "45° Right Facing", path: "/reference-library/angles/angle_45_right_facing.png", promptDirection: "Match the selected Chrome Smith angle reference exactly. Preserve the same visible sidewall direction, top or bottom tilt, object rotation, extrusion direction, and perspective shown in the thumbnail. Do not mirror, reverse, swap, or reinterpret the angle.", validationNote: "The thumbnail is the source of truth. Do not rely on the text label alone." },
+      { id: "angle_22_5_left_up", label: "22.5° Left + Up Facing", path: "/reference-library/angles/angle_22_5_left_up.png", promptDirection: "Match the selected Chrome Smith angle reference exactly. Preserve the same visible sidewall direction, top or bottom tilt, object rotation, extrusion direction, and perspective shown in the thumbnail. Do not mirror, reverse, swap, or reinterpret the angle.", validationNote: "The thumbnail is the source of truth. Do not rely on the text label alone." },
+      { id: "angle_22_5_right_up", label: "22.5° Right + Up Facing", path: "/reference-library/angles/angle_22_5_right_up.png", promptDirection: "Match the selected Chrome Smith angle reference exactly. Preserve the same visible sidewall direction, top or bottom tilt, object rotation, extrusion direction, and perspective shown in the thumbnail. Do not mirror, reverse, swap, or reinterpret the angle.", validationNote: "The thumbnail is the source of truth. Do not rely on the text label alone." },
+      { id: "angle_45_left_up", label: "45° Left + Up Facing", path: "/reference-library/angles/angle_45_left_up.png", promptDirection: "Match the selected Chrome Smith angle reference exactly. Preserve the same visible sidewall direction, top or bottom tilt, object rotation, extrusion direction, and perspective shown in the thumbnail. Do not mirror, reverse, swap, or reinterpret the angle.", validationNote: "The thumbnail is the source of truth. Do not rely on the text label alone." },
+      { id: "angle_45_right_up", label: "45° Right + Up Facing", path: "/reference-library/angles/angle_45_right_up.png", promptDirection: "Match the selected Chrome Smith angle reference exactly. Preserve the same visible sidewall direction, top or bottom tilt, object rotation, extrusion direction, and perspective shown in the thumbnail. Do not mirror, reverse, swap, or reinterpret the angle.", validationNote: "The thumbnail is the source of truth. Do not rely on the text label alone." },
+      { id: "angle_22_5_left_down", label: "22.5° Left + Down Facing", path: "/reference-library/angles/angle_22_5_left_down.png", promptDirection: "Match the selected Chrome Smith angle reference exactly. Preserve the same visible sidewall direction, top or bottom tilt, object rotation, extrusion direction, and perspective shown in the thumbnail. Do not mirror, reverse, swap, or reinterpret the angle.", validationNote: "The thumbnail is the source of truth. Do not rely on the text label alone." },
+      { id: "angle_22_5_right_down", label: "22.5° Right + Down Facing", path: "/reference-library/angles/angle_22_5_right_down.png", promptDirection: "Match the selected Chrome Smith angle reference exactly. Preserve the same visible sidewall direction, top or bottom tilt, object rotation, extrusion direction, and perspective shown in the thumbnail. Do not mirror, reverse, swap, or reinterpret the angle.", validationNote: "The thumbnail is the source of truth. Do not rely on the text label alone." },
+      { id: "angle_45_left_down", label: "45° Left + Down Facing", path: "/reference-library/angles/angle_45_left_down.png", promptDirection: "Match the selected Chrome Smith angle reference exactly. Preserve the same visible sidewall direction, top or bottom tilt, object rotation, extrusion direction, and perspective shown in the thumbnail. Do not mirror, reverse, swap, or reinterpret the angle.", validationNote: "The thumbnail is the source of truth. Do not rely on the text label alone." },
+      { id: "angle_45_right_down", label: "45° Right + Down Facing", path: "/reference-library/angles/angle_45_right_down.png", promptDirection: "Match the selected Chrome Smith angle reference exactly. Preserve the same visible sidewall direction, top or bottom tilt, object rotation, extrusion direction, and perspective shown in the thumbnail. Do not mirror, reverse, swap, or reinterpret the angle.", validationNote: "The thumbnail is the source of truth. Do not rely on the text label alone." }
+    ];
+    const GENERATE_ANGLE_ROWS = [
+      [
+        { label: "Top L", id: "angle_45_left_up" },
+        { label: "Top CL", id: "angle_22_5_left_up" },
+        { label: "Top CR", id: "angle_22_5_right_up" },
+        { label: "Top R", id: "angle_45_right_up" }
+      ],
+      [
+        { label: "Side L", id: "angle_22_5_left_facing" },
+        { label: "3/4 L", id: "angle_45_left_facing" },
+        { label: "Front", id: "angle_center" },
+        { label: "3/4 R", id: "angle_45_right_facing" },
+        { label: "Side R", id: "angle_22_5_right_facing" }
+      ],
+      [
+        { label: "Bot L", id: "angle_45_left_down" },
+        { label: "Bot CL", id: "angle_22_5_left_down" },
+        { label: "Bot CR", id: "angle_22_5_right_down" },
+        { label: "Bot R", id: "angle_45_right_down" }
+      ]
+    ];
+    function browserAnglePath(path) {
+      const normalized = String(path || "").replace(/^\/+/, "");
+      return location.protocol === "file:" ? normalized : `/${normalized}`;
+    }
+    function renderGenerateAngles(angles) {
+      const grid = document.querySelector("[data-generate-angle-grid]");
+      if (!grid) return;
+      grid.innerHTML = "";
+      const anglesById = new Map(angles.map(angle => [angle.id, angle]));
+      GENERATE_ANGLE_ROWS.forEach(rowConfig => {
+        const row = document.createElement("div");
+        row.className = "angle-row";
+        rowConfig.forEach(item => {
+          const angle = anglesById.get(item.id) || FALLBACK_GENERATE_ANGLES.find(fallback => fallback.id === item.id);
+          if (!angle) return;
+          const button = document.createElement("button");
+          button.className = `angle-btn${item.id === "angle_center" ? " active" : ""}`;
+          button.type = "button";
+          button.dataset.angleId = item.id;
+          button.dataset.promptDirection = angle.promptDirection || "";
+          button.dataset.validationNote = angle.validationNote || "";
+          button.title = `${item.label}: ${angle.validationNote || angle.label}`;
+          const image = document.createElement("img");
+          image.className = "angle-thumb";
+          image.src = browserAnglePath(angle.path);
+          image.alt = item.label;
+          const label = document.createElement("span");
+          label.className = "angle-label";
+          label.textContent = item.label;
+          button.append(image, label);
+          row.append(button);
+        });
+        grid.append(row);
+      });
+    }
+    async function loadGenerateAngles() {
+      try {
+        const response = await fetch(browserAnglePath("/reference-library/angles.json"), { cache: "no-store" });
+        if (!response.ok) throw new Error("Could not load angle registry.");
+        const data = await response.json();
+        renderGenerateAngles(Array.isArray(data.angles) && data.angles.length ? data.angles : FALLBACK_GENERATE_ANGLES);
+      } catch {
+        renderGenerateAngles(FALLBACK_GENERATE_ANGLES);
+      }
+    }
+    loadGenerateAngles();
     document.querySelectorAll("[data-page]").forEach(button => button.addEventListener("click", () => {
       const id = button.dataset.page;
       pages.forEach(page => page.classList.toggle("active", page.id === id));

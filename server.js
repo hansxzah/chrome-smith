@@ -188,6 +188,35 @@ function downloadImage(source, filename, response) {
   upstream.on("error", error => json(response, 502, { error: error.message }));
 }
 
+function getContentType(filePath) {
+  const extension = path.extname(filePath).toLowerCase();
+  if (extension === ".json") return "application/json; charset=utf-8";
+  if (extension === ".png") return "image/png";
+  if (extension === ".jpg" || extension === ".jpeg") return "image/jpeg";
+  if (extension === ".webp") return "image/webp";
+  return "application/octet-stream";
+}
+
+function serveStaticFile(requestUrl, response) {
+  const decodedPath = decodeURIComponent(new URL(requestUrl, "http://localhost").pathname);
+  const relativePath = decodedPath.replace(/^\/+/, "");
+  const filePath = path.normalize(path.join(ROOT, relativePath));
+  const allowedRoot = path.join(ROOT, "reference-library");
+  if (!filePath.startsWith(allowedRoot + path.sep) && filePath !== allowedRoot) {
+    json(response, 403, { error: "Forbidden." });
+    return;
+  }
+  if (!fs.existsSync(filePath) || !fs.statSync(filePath).isFile()) {
+    json(response, 404, { error: "File not found." });
+    return;
+  }
+  response.writeHead(200, {
+    "Content-Type": getContentType(filePath),
+    "Cache-Control": "no-store"
+  });
+  fs.createReadStream(filePath).pipe(response);
+}
+
 const server = http.createServer(async (request, response) => {
   if (request.method === "GET" && request.url === "/") {
     response.writeHead(200, {
@@ -195,6 +224,11 @@ const server = http.createServer(async (request, response) => {
       "Cache-Control": "no-store"
     });
     fs.createReadStream(path.join(ROOT, "index.html")).pipe(response);
+    return;
+  }
+
+  if (request.method === "GET" && new URL(request.url, "http://localhost").pathname.startsWith("/reference-library/")) {
+    serveStaticFile(request.url, response);
     return;
   }
 
