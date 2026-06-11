@@ -114,17 +114,129 @@ function classifyMaterial(userPrompt, assetCategory) {
   return MATERIALS.PLAIN_CHROME;
 }
 
+function normalizeSubjectText(value) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9%$€£¥]+/g, "");
+}
+
+function extractExactContentTokens(userPrompt) {
+  const prompt = String(userPrompt || "");
+  const tokens = new Set();
+  const patterns = [
+    /[$€£¥]\s*\d+(?:[.,]\d+)?/g,
+    /\b\d+(?:[.,]\d+)?\s*%/g,
+    /\b\d+(?:[.,]\d+)?\b/g,
+    /\b[A-Z0-9]{2,8}\b/g
+  ];
+
+  patterns.forEach(pattern => {
+    for (const match of prompt.matchAll(pattern)) {
+      const token = match[0].replace(/\s+/g, "");
+      if (/[0-9%$€£¥]/.test(token) || /^[A-Z0-9]{2,8}$/.test(token)) {
+        tokens.add(token);
+      }
+    }
+  });
+
+  return [...tokens].filter(token => {
+    const normalized = normalizeSubjectText(token);
+    return ![...tokens].some(other => {
+      if (other === token) return false;
+      const otherNormalized = normalizeSubjectText(other);
+      return otherNormalized.length > normalized.length && otherNormalized.includes(normalized);
+    });
+  });
+}
+
+function buildSubjectLockBlock(userPrompt, assetCategory) {
+  const exactTokens = assetCategory === ASSET_CATEGORIES.GENERIC ? extractExactContentTokens(userPrompt) : [];
+  const lines = [
+    "The user request is the source of truth for the subject. Do not copy the object, text, number, logo, or symbol from any reference image unless it exactly matches the user request.",
+    "The reference images are not content sources. The requested subject/content must come from the user request only."
+  ];
+
+  if (assetCategory === ASSET_CATEGORIES.GENERIC) {
+    lines.push("For exact text, number, and symbol requests such as 20%, 50%, 100%, $20, VIP, or 43, preserve the complete glyph sequence exactly.");
+  }
+
+  exactTokens.forEach(token => {
+    lines.push(`Exact glyph lock: the output must include the complete \"${token}\" exactly as typed. Do not render only part of \"${token}\". Do not omit punctuation, currency symbols, percent signs, letters, or digits. Do not change the order or value. Treat \"${token}\" as one complete 3D asset.`);
+  });
+
+  return lines.join("\n");
+}
+
+function buildReferenceRolesBlock() {
+  return [
+    "Reference image roles:",
+    "- Angle reference image: use only for perspective, camera direction, tilt, visible sidewall, extrusion direction, and angle.",
+    "- Style/material reference images: use only for material, bevel thickness, chrome lighting, reflection quality, shadow softness, and surface treatment.",
+    "- Do not copy the subject/content from style/material references.",
+    "- Do not let style/material references override the selected angle.",
+    "- Do not let the angle reference override the requested subject."
+  ].join("\n");
+}
+
+function buildAnglePriorityBlock(selectedAngle) {
+  return [
+    selectedAngle.promptDirection,
+    "The selected angle reference has highest priority for perspective. Match the selected angle thumbnail exactly. Do not default to front view unless selectedAngleId is angle_center. Do not mirror, reverse, or reinterpret the angle."
+  ].join("\n");
+}
+
+function buildMaterialOverrideBlock(assetCategory, material, userPrompt) {
+  const text = normalizePrompt(userPrompt);
+  if (assetCategory === ASSET_CATEGORIES.PRODUCT_TILE && material === MATERIALS.MULTICOLORED_TILE) {
+    return [
+      "multicolored tile rule:",
+      "The entire main tile face/body should use the relevant brand/logo color treatment. Chrome or silver material may be used only for rim, sidewall, bevel, frame, or subtle highlights. Do not make the whole tile plain silver chrome unless the prompt specifically asks for chrome tile.",
+      "For an Instagram tile, the tile body should be multicolored/brand-colored, the logo should remain recognizable, and chrome may appear on sidewalls, rim, bevel, or raised logo details."
+    ].join("\n");
+  }
+
+  if (assetCategory === ASSET_CATEGORIES.CRYPTO && material === MATERIALS.MULTICOLORED_COIN) {
+    const btcInstruction = /\bbtc\b|\bbitcoin\b/.test(text)
+      ? "For a BTC coin, the coin body should be orange/gold Bitcoin-style, the BTC symbol should remain recognizable, and chrome may appear only on rim, sidewall, bevel, or supporting highlights."
+      : "The token symbol should remain recognizable, and chrome may appear only on rim, sidewall, bevel, or supporting highlights.";
+    return [
+      "multicolored coin rule:",
+      "The coin body/face should follow the token or logo color treatment. Chrome or silver may be used only for rim, sidewall, bevel, frame, or supporting highlights. Do not make the whole coin plain silver chrome unless the prompt specifically asks for silver chrome.",
+      btcInstruction
+    ].join("\n");
+  }
+
+  return "";
+}
+
 function getAngleById(angleId) {
   const registry = loadAngleRegistry();
   const angles = Array.isArray(registry.angles) ? registry.angles : [];
   return angles.find(angle => angle.id === angleId) || angles.find(angle => angle.id === "angle_center") || null;
 }
 
-function selectStyleReferences({ assetCategory, material, max = 3 }) {
+function selectStyleReferences({ assetCategory, material, userPrompt = "", max = 3 }) {
   const registry = loadReferenceRegistry();
   const references = Array.isArray(registry.references) ? registry.references : [];
-  return references
-    .filter(reference => reference.category === assetCategory && reference.material === material)
+  const matches = references.filter(reference => reference.category === assetCategory && reference.material === material);
+  const exactTokens = extractExactContentTokens(userPrompt).map(normalizeSubjectText).filter(Boolean);
+
+  if (!exactTokens.length) return matches.slice(0, max);
+
+  const scored = matches.map((reference, index) => {
+    const subject = normalizeSubjectText(reference.subject_type);
+    const exactSubjectMatch = exactTokens.some(token => subject === token || subject.includes(token));
+    const numericLeakRisk = reference.shape_type === "numerical" && !exactSubjectMatch;
+    const simpleMaterialAnchor = reference.shape_type === "simple_icon" || reference.shape_type === "tile" || reference.shape_type === "coin" || reference.shape_type === "market_asset";
+    return {
+      reference,
+      score: (exactSubjectMatch ? 30 : 0) + (simpleMaterialAnchor ? 10 : 0) - (numericLeakRisk ? 25 : 0) - index / 1000
+    };
+  });
+
+  return scored
+    .sort((a, b) => b.score - a.score)
+    .map(item => item.reference)
     .slice(0, max);
 }
 
@@ -139,7 +251,7 @@ function buildPrompt({ feature, userPrompt, selectedAngleId }) {
   const assetCategory = classifyAssetCategory(userPrompt);
   const material = classifyMaterial(userPrompt, assetCategory);
   const selectedAngle = getAngleById(selectedAngleId);
-  const selectedReferences = selectStyleReferences({ assetCategory, material });
+  const selectedReferences = selectStyleReferences({ assetCategory, material, userPrompt });
 
   if (!selectedAngle) {
     throw new Error("Angle registry does not contain a center fallback angle.");
@@ -155,18 +267,24 @@ function buildPrompt({ feature, userPrompt, selectedAngleId }) {
     "Feature behavior:",
     getFeatureModule(modules, feature),
     "",
+    "Subject/content lock:",
+    buildSubjectLockBlock(userPrompt, assetCategory),
+    "",
     "Asset category:",
     modules[assetCategory],
     "",
     "Material behavior:",
     modules[`material_${material}`],
+    buildMaterialOverrideBlock(assetCategory, material, userPrompt),
     "",
     "Reference behavior:",
     modules.reference_behavior,
     "",
+    buildReferenceRolesBlock(),
+    "",
     "Angle behavior:",
     modules.angle_behavior,
-    selectedAngle.promptDirection,
+    buildAnglePriorityBlock(selectedAngle),
     "",
     "Output rules:",
     modules.output_rules,
