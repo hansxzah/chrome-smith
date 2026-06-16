@@ -179,9 +179,62 @@ function buildReferenceRolesBlock() {
 }
 
 function buildAnglePriorityBlock(selectedAngle) {
-  return [
+  const id = selectedAngle.id || "";
+  const isRightFacing = /_right(?:_|$)/.test(id);
+  const isThreeQuarterRight = id === "angle_45_right_facing";
+  const isSideRight = id === "angle_22_5_right_facing";
+  const lines = [
     selectedAngle.promptDirection,
-    "The selected angle reference has highest priority for perspective. Match the selected angle thumbnail exactly. Do not default to front view unless selectedAngleId is angle_center. Do not mirror, reverse, or reinterpret the angle."
+    "The selected angle reference image is the source of truth. The selected angle reference has highest priority for perspective. Match the selected angle thumbnail exactly. Do not default to front view unless selectedAngleId is angle_center. Do not mirror, reverse, swap, or reinterpret left/right.",
+    "Preserve the same visible sidewall direction, top or bottom tilt, object rotation, extrusion direction, and perspective shown in the selected angle reference."
+  ];
+
+  if (isRightFacing) {
+    lines.push("Right-facing angle enforcement: the asset must face toward the viewer's right. Do not mirror it into a left-facing angle. Preserve the same right-facing visible sidewall direction as the selected angle reference.");
+  }
+  if (isThreeQuarterRight) {
+    lines.push("For 3/4 R specifically, the output must remain right-facing with the right-side perspective visible. If the output faces left when 3/4 R is selected, that is wrong.");
+  }
+  if (isSideRight) {
+    lines.push("For Side R specifically, the output must remain side-right-facing. If the output faces left when Side R is selected, that is wrong.");
+  }
+
+  return lines.join("\n");
+}
+
+function buildSubjectSpecificGuidanceBlock(assetCategory, userPrompt) {
+  const text = normalizePrompt(userPrompt);
+  const lines = [];
+
+  if (assetCategory === ASSET_CATEGORIES.CRYPTO) {
+    lines.push(
+      "Crypto coin logo rule:",
+      "The coin must include the correct token/logo mark on the front face. The logo or symbol must be visible, centered, and readable. Do not omit the token symbol. Do not create a blank coin face. Do not generate only random lines, generic markings, or unrelated symbols. Preserve circular coin form, beveled rim, sidewall, thickness, and selected angle."
+    );
+    if (/\bbtc\b|\bbitcoin\b/.test(text)) {
+      lines.push(
+        "BTC / Bitcoin rule:",
+        "Treat this as a Bitcoin coin request. The coin face must include a visible centered Bitcoin \u20bf symbol or recognizable Bitcoin logo mark. Do not create a blank coin face. Do not generate only random lines, generic markings, or unrelated symbols. Preserve the circular coin body, beveled rim, sidewall, thickness, and selected angle."
+      );
+    }
+  }
+
+  if (assetCategory === ASSET_CATEGORIES.MARKET && /\bnvidia\b/.test(text)) {
+    lines.push(
+      "NVIDIA logo/color rule:",
+      "Preserve a recognizable NVIDIA-style logo/icon. Preserve NVIDIA-style green and black color recognition where possible. Do not convert the logo into plain silver unless the user specifically asks for silver/chrome only. Keep Chrome Smith metallic polish, bevels, lighting, and the selected angle."
+    );
+  }
+
+  if (assetCategory === ASSET_CATEGORIES.PRODUCT_TILE && /\binstagram\b/.test(text)) {
+    lines.push(
+      "Instagram tile rule:",
+      "Generate a smooth rounded-square 3D tile/slab. Use Instagram-inspired color/gradient treatment across the whole tile body with a polished metallic finish. Place the Instagram-style camera glyph as a clean decal, inset mark, or lightly embossed mark on the front face. Do not make the logo a thick separate 3D object. Keep visible tile thickness, bevel, sidewall, and back edge for 3/4 angles."
+    );
+  }
+
+  return [
+    ...lines
   ].join("\n");
 }
 
@@ -191,14 +244,14 @@ function buildMaterialOverrideBlock(assetCategory, material, userPrompt) {
     return [
       "multicolored tile rule:",
       "The entire main tile face/body should use the relevant brand/logo color treatment. Chrome or silver material may be used only for rim, sidewall, bevel, frame, or subtle highlights. Do not make the whole tile plain silver chrome unless the prompt specifically asks for chrome tile.",
-      "For an Instagram tile, the tile body should be multicolored/brand-colored, the logo should remain recognizable, and chrome may appear on sidewalls, rim, bevel, or raised logo details."
+      "For an Instagram tile, the tile body should be multicolored/brand-colored with an Instagram-inspired gradient/color treatment, the camera glyph should remain clean and readable as a decal, inset mark, or lightly embossed mark, and chrome may appear only on sidewalls, rim, bevel, frame, or subtle highlights."
     ].join("\n");
   }
 
   if (assetCategory === ASSET_CATEGORIES.CRYPTO && material === MATERIALS.MULTICOLORED_COIN) {
     const btcInstruction = /\bbtc\b|\bbitcoin\b/.test(text)
-      ? "For a BTC coin, the coin body should be orange/gold Bitcoin-style, the BTC symbol should remain recognizable, and chrome may appear only on rim, sidewall, bevel, or supporting highlights."
-      : "The token symbol should remain recognizable, and chrome may appear only on rim, sidewall, bevel, or supporting highlights.";
+      ? "For a BTC coin, the coin body should be orange/gold Bitcoin-style, the coin face must include a visible centered Bitcoin \u20bf symbol or recognizable Bitcoin logo mark, and chrome may appear only on rim, sidewall, bevel, or supporting highlights."
+      : "The correct token/logo mark must remain visible, centered, and readable on the coin face, and chrome may appear only on rim, sidewall, bevel, or supporting highlights.";
     return [
       "multicolored coin rule:",
       "The coin body/face should follow the token or logo color treatment. Chrome or silver may be used only for rim, sidewall, bevel, frame, or supporting highlights. Do not make the whole coin plain silver chrome unless the prompt specifically asks for silver chrome.",
@@ -252,6 +305,7 @@ function buildPrompt({ feature, userPrompt, selectedAngleId }) {
   const material = classifyMaterial(userPrompt, assetCategory);
   const selectedAngle = getAngleById(selectedAngleId);
   const selectedReferences = selectStyleReferences({ assetCategory, material, userPrompt });
+  const subjectSpecificGuidance = buildSubjectSpecificGuidanceBlock(assetCategory, userPrompt);
 
   if (!selectedAngle) {
     throw new Error("Angle registry does not contain a center fallback angle.");
@@ -273,6 +327,7 @@ function buildPrompt({ feature, userPrompt, selectedAngleId }) {
     "Asset category:",
     modules[assetCategory],
     "",
+    ...(subjectSpecificGuidance ? ["Subject-specific guidance:", subjectSpecificGuidance, ""] : []),
     "Material behavior:",
     modules[`material_${material}`],
     buildMaterialOverrideBlock(assetCategory, material, userPrompt),
