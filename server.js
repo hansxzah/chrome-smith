@@ -30,8 +30,16 @@ function loadEnv(file) {
 
 loadEnv(ENV_FILE);
 
+function corsHeaders() {
+  return {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type"
+  };
+}
+
 function json(response, status, body) {
-  response.writeHead(status, { "Content-Type": "application/json; charset=utf-8" });
+  response.writeHead(status, { "Content-Type": "application/json; charset=utf-8", ...corsHeaders() });
   response.end(JSON.stringify(body));
 }
 
@@ -398,6 +406,12 @@ function serveStaticFile(requestUrl, response) {
 }
 
 const server = http.createServer(async (request, response) => {
+  if (request.method === "OPTIONS") {
+    response.writeHead(204, corsHeaders());
+    response.end();
+    return;
+  }
+
   if (request.method === "GET" && request.url === "/") {
     response.writeHead(200, {
       "Content-Type": "text/html; charset=utf-8",
@@ -582,6 +596,6 @@ const server = http.createServer(async (request, response) => {
   json(response, 404, { error: "Not found." });
 });
 
-server.listen(PORT, "127.0.0.1", () => {
+server.listen(PORT, () => {
   console.log(`Chrome Smith is running at http://localhost:${PORT}`);
 });

@@ -419,6 +419,46 @@
       }
     }
     loadGenerateAngles();
+    function postJson(url, payload) {
+      const body = JSON.stringify(payload);
+      const apiUrl = location.protocol === "file:" ? `http://localhost:3000${url}` : url;
+      const parseResponse = async response => {
+        let data;
+        try {
+          data = await response.json();
+        } catch {
+          throw new Error("Generate returned a non-JSON response. Restart the local Chrome Smith server and try again.");
+        }
+        return { ok: response.ok, status: response.status, data };
+      };
+      const postWithXhr = () => new Promise((resolve, reject) => {
+        if (typeof XMLHttpRequest !== "function") {
+          reject(new Error("Could not reach /api/generate. Check that the local Chrome Smith server is running, then refresh the page."));
+          return;
+        }
+        const xhr = new XMLHttpRequest();
+        xhr.open("POST", apiUrl, true);
+        xhr.setRequestHeader("Content-Type", "application/json");
+        xhr.onload = () => {
+          try {
+            resolve({ ok: xhr.status >= 200 && xhr.status < 300, status: xhr.status, data: JSON.parse(xhr.responseText || "{}") });
+          } catch {
+            reject(new Error("Generate returned a non-JSON response. Restart the local Chrome Smith server and try again."));
+          }
+        };
+        xhr.onerror = () => reject(new Error("Could not reach /api/generate. Check that the local Chrome Smith server is running, then refresh the page."));
+        xhr.ontimeout = () => reject(new Error("Generate timed out. Try again with fewer references or restart the local Chrome Smith server."));
+        xhr.timeout = 130000;
+        xhr.send(body);
+      });
+      if (typeof XMLHttpRequest === "function") {
+        return postWithXhr();
+      }
+      if (typeof fetch === "function") {
+        return fetch(apiUrl, { method: "POST", headers: { "Content-Type": "application/json" }, body }).then(parseResponse);
+      }
+      return Promise.reject(new Error("Could not reach /api/generate. Check that the local Chrome Smith server is running, then refresh the page."));
+    }
     document.querySelectorAll("[data-page]").forEach(button => button.addEventListener("click", () => {
       const id = button.dataset.page;
       pages.forEach(page => page.classList.toggle("active", page.id === id));
@@ -464,21 +504,45 @@
       }
       button.disabled = true;
       try {
-        const angle = document.querySelector("#generate .angle-btn.active").textContent.trim();
+        const selectedAngleButton = document.querySelector("#generate .angle-btn.active");
+        const angle = selectedAngleButton?.textContent.trim() || "Front";
         const description = document.querySelector("#prompt").value.trim();
         if (!description) throw new Error("Enter a prompt before generating.");
         const resolution = getSelectedResolution(document.querySelector("#generate"));
         const transparentBackground = document.querySelector("#transparent-background").checked;
-        const selectedAngleId = document.querySelector("#generate .angle-btn.active")?.dataset.angleId || "angle_center";
-        const response = await fetch("/api/generate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ prompt: description, selectedAngleId, resolution, transparentBackground }) });
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error || "Generation failed.");
+        const selectedAngleId = selectedAngleButton?.dataset.angleId || "angle_center";
+        const debugMetadata = { selectedAngleId, selectedAngleLabel: angle };
+        console.debug("Chrome Smith Generate debug:", debugMetadata);
+        const { ok, data } = await postJson("/api/generate", { prompt: description, selectedAngleId, resolution, transparentBackground, debugMetadata });
+        if (!ok || data.ok === false) throw new Error(data.message || (typeof data.error === "string" ? data.error : "Generation failed."));
+        if (!data.image) throw new Error("Generate completed but did not return an image.");
         const outputImage = await prepareResolutionOutput(data.image, resolution);
         const image = output.querySelector(".generated-image");
         image.src = outputImage.image;
         image.classList.add("show");
         output.querySelector("[data-background-badge]").textContent = transparentBackground ? "TRANSPARENT" : "AUTO BG";
-        await addAsset({ type: "generate", image: outputImage.image, prompt: description, action: angle, settings: { resolution, transparentBackground, actualSize: outputImage.size, outputMethod: outputImage.method } });
+        const promptBuilderDebug = data.promptBuilder?.debug || {};
+        await addAsset({
+          type: "generate",
+          image: outputImage.image,
+          prompt: description,
+          action: angle,
+          settings: {
+            resolution,
+            transparentBackground,
+            actualSize: outputImage.size,
+            outputMethod: outputImage.method,
+            selectedAngleId,
+            selectedAngleLabel: angle,
+            officialAngleLabel: data.promptBuilder?.selectedAngle?.label || promptBuilderDebug.resolvedSelectedAngleLabel || "",
+            assetCategory: data.promptBuilder?.assetCategory || promptBuilderDebug.assetCategory || "",
+            material: data.promptBuilder?.material || promptBuilderDebug.material || "",
+            selectedStyleReferenceIds: promptBuilderDebug.selectedStyleReferenceIds || [],
+            selectedStyleReferencePaths: promptBuilderDebug.selectedStyleReferencePaths || [],
+            attachedReferenceImageCount: promptBuilderDebug.attachedReferenceImageCount || 0,
+            finalPromptPreview: promptBuilderDebug.finalPromptPreview || ""
+          }
+        });
       } catch (error) {
         const message = output.querySelector(".output-error");
         message.textContent = error.message;
