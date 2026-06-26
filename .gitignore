@@ -2,3 +2,7 @@ ChromeSmithKey.env
 .env
 node_modules/
 .DS_Store
+
+# Local recovery outputs
+recovered-assets/
+recovered-chrome-smith-history*.json
