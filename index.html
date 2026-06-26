@@ -143,6 +143,22 @@
     .generate-options { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line); }
     .generate-options .card-title { margin: 0; }
     .generate-options .resolution { margin-right: 0; }
+    .debug-preview { display: none; margin-top: 14px; }
+    .debug-preview.show { display: block; }
+    .debug-summary { display: flex; align-items: center; justify-content: space-between; gap: 10px; color: var(--ink); font-size: 11px; font-weight: 700; cursor: pointer; list-style: none; }
+    .debug-summary::-webkit-details-marker { display: none; }
+    .debug-summary i { color: var(--accent); font-size: 16px; }
+    .debug-body { margin-top: 12px; display: grid; gap: 12px; }
+    .debug-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 7px; }
+    .debug-field { padding: 8px; border: 1px solid var(--line); border-radius: 9px; background: var(--surface-2); min-width: 0; }
+    .debug-label { margin-bottom: 4px; color: var(--faint); font-size: 8px; font-weight: 800; letter-spacing: .5px; text-transform: uppercase; }
+    .debug-value { color: var(--ink); font-size: 10px; font-weight: 650; line-height: 1.45; overflow-wrap: anywhere; white-space: pre-wrap; }
+    .debug-refs { display: grid; grid-template-columns: repeat(auto-fit, minmax(145px, 1fr)); gap: 8px; }
+    .debug-ref { padding: 8px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-2); min-width: 0; }
+    .debug-ref img { width: 100%; height: 90px; object-fit: contain; display: block; margin-bottom: 7px; border: 1px solid var(--line); border-radius: 8px; background: var(--base); }
+    .debug-ref-title { color: var(--ink); font-size: 9px; font-weight: 800; line-height: 1.35; overflow-wrap: anywhere; }
+    .debug-ref-path { margin-top: 3px; color: var(--muted); font-size: 8px; line-height: 1.4; overflow-wrap: anywhere; }
+    .debug-prompt { max-height: 260px; overflow: auto; padding: 10px; color: var(--ink); border: 1px solid var(--line); border-radius: 10px; background: var(--surface-2); font-size: 9px; line-height: 1.55; white-space: pre-wrap; }
     .transparent-option { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 12px; color: var(--muted); font-size: 10px; font-weight: 700; }
     .transparent-toggle { position: relative; width: 35px; height: 20px; flex: 0 0 auto; }
     .transparent-toggle input { position: absolute; opacity: 0; pointer-events: none; }
@@ -217,7 +233,9 @@
     .history-item:hover, .history-item:focus-visible { border-color: var(--faint); transform: translateY(-2px); box-shadow: var(--shadow); }
     .history-item.selected { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(255, 68, 79, .14); }
     .history-item.checked { background: var(--accent-soft); }
-    .history-image { width: 100%; aspect-ratio: 1; display: block; object-fit: contain; background: var(--base); }
+    .history-image-shell { width: 100%; aspect-ratio: 1; display: grid; place-items: center; overflow: hidden; padding: 8px; background: var(--base); }
+    .history-image { width: auto; height: auto; max-width: 100%; max-height: 100%; display: block; object-fit: contain; object-position: center; }
+    .history-image-unavailable { width: 100%; aspect-ratio: 1; display: grid; place-items: center; padding: 14px; color: var(--faint); background: var(--base); font-size: 10px; font-weight: 800; text-align: center; }
     .history-meta {
       position: absolute; right: 0; bottom: 0; left: 0; padding: 28px 9px 9px;
       color: #fff; background: linear-gradient(to top, rgba(20,20,20,.8), rgba(20,20,20,.46) 58%, transparent);
@@ -301,7 +319,15 @@
           </div>
           <div class="card output-card"><div class="card-title">Output preview</div><div class="output-zone" data-output><div class="empty-state"><div class="empty-icon"><i class="ti ti-cube"></i></div><div class="empty-title">Your 3D object appears here</div><div class="empty-sub">Enter a prompt to forge your first asset</div></div><div class="loading"><div class="loader"></div>Forging object...</div><div class="output-error"></div><img class="generated-image" alt="Generated 3D object"><div class="result-art"><div class="orb-shadow"></div><div class="orb"><i class="ti ti-rocket"></i></div></div><div class="stage-badges"><span>PNG</span><span data-background-badge>TRANSPARENT</span></div></div></div>
         </div>
-        <div class="card history-card context-history" data-history-scope="generate"><div class="history-head"><div><div class="history-title"><i class="ti ti-sparkles"></i> Generate History</div><div class="history-count" data-history-count>0 assets</div></div></div><div class="library-toolbar"><div class="library-actions"><button class="bulk-btn" data-download-selected disabled><i class="ti ti-download"></i> Download Selected</button><button class="bulk-btn" data-delete-selected disabled><i class="ti ti-trash"></i> Delete Selected</button><button class="bulk-btn" data-clear-scope disabled>Clear Generate History</button></div></div><div class="history-grid" data-history-grid></div></div>
+        <details class="card debug-preview" data-generate-debug>
+          <summary class="debug-summary"><span><i class="ti ti-bug"></i> Debug preview</span><span>Generation payload</span></summary>
+          <div class="debug-body">
+            <div class="debug-grid" data-debug-fields></div>
+            <div><div class="card-title">Reference attachment order</div><div class="debug-refs" data-debug-refs></div></div>
+            <div><div class="card-title">Final prompt sent to image API</div><pre class="debug-prompt" data-debug-prompt></pre></div>
+          </div>
+        </details>
+        <div class="card history-card context-history" data-history-scope="generate"><div class="history-head"><div><div class="history-title"><i class="ti ti-sparkles"></i> Generate History</div><div class="history-count" data-history-count>0 assets</div></div></div><div class="library-toolbar"><div class="library-actions"><button class="bulk-btn" data-download-selected disabled><i class="ti ti-download"></i> Download Selected</button><button class="bulk-btn" data-delete-selected disabled><i class="ti ti-trash"></i> Delete Selected</button><button class="bulk-btn" data-clear-broken disabled>Clear Broken History</button><button class="bulk-btn" data-clear-scope disabled>Clear Generate History</button></div></div><div class="history-grid" data-history-grid></div></div>
       </section>
 
       <section class="page" id="reangle">
@@ -333,6 +359,11 @@
     const pages = document.querySelectorAll(".page");
     const HISTORY_KEY = "chromeSmithAssetLibrary";
     const LEGACY_HISTORY_KEY = "chromeSmithGenerationHistory";
+    const HISTORY_DB_NAME = "chromeSmithHistoryDB";
+    const HISTORY_DB_VERSION = 1;
+    const HISTORY_IMAGE_STORE = "images";
+    let historyDbPromise = null;
+    const historyImageCache = new Map();
     let assetLibrary = [];
     let selectedAssetId = null;
     let libraryFilter = "all";
@@ -459,6 +490,104 @@
       }
       return Promise.reject(new Error("Could not reach /api/generate. Check that the local Chrome Smith server is running, then refresh the page."));
     }
+    function debugValue(value) {
+      if (Array.isArray(value)) return value.length ? value.join("\n") : "none";
+      if (value === true) return "true";
+      if (value === false) return "false";
+      if (value === null || value === undefined || value === "") return "none";
+      if (typeof value === "object") return JSON.stringify(value, null, 2);
+      return String(value);
+    }
+    function addDebugField(container, label, value) {
+      const field = document.createElement("div");
+      field.className = "debug-field";
+      const labelNode = document.createElement("div");
+      labelNode.className = "debug-label";
+      labelNode.textContent = label;
+      const valueNode = document.createElement("div");
+      valueNode.className = "debug-value";
+      valueNode.textContent = debugValue(value);
+      field.append(labelNode, valueNode);
+      container.append(field);
+    }
+    function addDebugReference(container, title, path, details = "") {
+      const card = document.createElement("div");
+      card.className = "debug-ref";
+      if (path) {
+        const image = document.createElement("img");
+        image.src = browserAnglePath(path);
+        image.alt = title;
+        card.append(image);
+      }
+      const titleNode = document.createElement("div");
+      titleNode.className = "debug-ref-title";
+      titleNode.textContent = title;
+      const pathNode = document.createElement("div");
+      pathNode.className = "debug-ref-path";
+      pathNode.textContent = [path, details].filter(Boolean).join("\n");
+      card.append(titleNode, pathNode);
+      container.append(card);
+    }
+    function renderGenerateDebugPreview(data, requestInfo = {}) {
+      const panel = document.querySelector("[data-generate-debug]");
+      if (!panel) return;
+      const fields = panel.querySelector("[data-debug-fields]");
+      const refs = panel.querySelector("[data-debug-refs]");
+      const prompt = panel.querySelector("[data-debug-prompt]");
+      fields.innerHTML = "";
+      refs.innerHTML = "";
+      const promptBuilder = data.promptBuilder || {};
+      const debug = { ...(data.debug || {}), ...(promptBuilder.debug || {}), ...(promptBuilder.debugMetadata || {}) };
+      const selectedAngle = promptBuilder.selectedAngle || {};
+      const selectedReferences = Array.isArray(promptBuilder.selectedReferences) ? promptBuilder.selectedReferences : [];
+      const primaryReference = debug.selectedPrimaryReference || selectedReferences[0] || {};
+      const attachedReferenceOrder = debug.attachedReferenceOrder || [
+        selectedAngle.path ? `angle_reference:${selectedAngle.path}` : "",
+        ...selectedReferences.map(reference => `${reference.reference_role || "reference"}:${reference.path}`)
+      ].filter(Boolean);
+
+      addDebugField(fields, "User prompt", requestInfo.prompt);
+      addDebugField(fields, "selectedAngleId", requestInfo.selectedAngleId || debug.clientSelectedAngleId || debug.resolvedSelectedAngleId);
+      addDebugField(fields, "Selected angle label", requestInfo.selectedAngleLabel || debug.clientSelectedAngleLabel);
+      addDebugField(fields, "Official angle label", selectedAngle.label || debug.resolvedSelectedAngleLabel);
+      addDebugField(fields, "detected assetCategory", promptBuilder.assetCategory || debug.assetCategory || debug.detectedAssetCategory);
+      addDebugField(fields, "autoSelectedMaterial", debug.autoSelectedMaterial || promptBuilder.material || debug.material);
+      addDebugField(fields, "materialSelectionReason", debug.materialSelectionReason);
+      addDebugField(fields, "genericFormProfile / formProfile", debug.genericFormProfile || debug.formProfile);
+      addDebugField(fields, "detectedConcept", debug.detectedConcept);
+      addDebugField(fields, "literalSubject", debug.literalSubject);
+      addDebugField(fields, "metaphorTerms", debug.metaphorTerms);
+      addDebugField(fields, "searchedReferenceTerms", debug.searchedReferenceTerms);
+      addDebugField(fields, "selected primary reference id", primaryReference.id);
+      addDebugField(fields, "selected primary reference path", primaryReference.path);
+      addDebugField(fields, "selectedReferenceReason", debug.selectedReferenceReason || primaryReference.reason || primaryReference.reference_reason);
+      addDebugField(fields, "selectedReferenceRole", debug.selectedReferenceRole || primaryReference.role || primaryReference.reference_role);
+      addDebugField(fields, "selectedReferenceScore", debug.selectedReferenceScore || primaryReference.score || primaryReference.reference_score);
+      addDebugField(fields, "fallbackUsed", debug.fallbackUsed);
+      addDebugField(fields, "selectedReferenceIds", debug.selectedReferenceIds || selectedReferences.map(reference => reference.id));
+      addDebugField(fields, "attachedReferenceOrder", attachedReferenceOrder);
+
+      addDebugReference(refs, `Angle reference: ${selectedAngle.label || requestInfo.selectedAngleLabel || "selected angle"}`, selectedAngle.path || debug.selectedAngleReferencePath, selectedAngle.id || requestInfo.selectedAngleId);
+      selectedReferences.forEach((reference, index) => {
+        addDebugReference(
+          refs,
+          `${index + 1}. ${reference.reference_role || "style/archetype reference"}: ${reference.id}`,
+          reference.path,
+          `score: ${debugValue(reference.reference_score)}\nreason: ${debugValue(reference.reference_reason)}`
+        );
+      });
+
+      prompt.textContent = promptBuilder.finalPrompt || debug.finalPrompt || debug.finalPromptPreview || "";
+      panel.classList.add("show");
+      panel.open = true;
+      console.debug("Chrome Smith Generate debug preview:", {
+        userPrompt: requestInfo.prompt,
+        selectedAngleId: requestInfo.selectedAngleId,
+        selectedAngleLabel: requestInfo.selectedAngleLabel,
+        promptBuilder,
+        debug
+      });
+    }
     document.querySelectorAll("[data-page]").forEach(button => button.addEventListener("click", () => {
       const id = button.dataset.page;
       pages.forEach(page => page.classList.toggle("active", page.id === id));
@@ -508,14 +637,25 @@
         const angle = selectedAngleButton?.textContent.trim() || "Front";
         const description = document.querySelector("#prompt").value.trim();
         if (!description) throw new Error("Enter a prompt before generating.");
+        if (isHistoryCommand(description)) {
+          output.querySelector(".loading").classList.remove("show");
+          output.querySelector(".empty-state").style.display = "";
+          revealGenerateHistory();
+          return;
+        }
         const resolution = getSelectedResolution(document.querySelector("#generate"));
         const transparentBackground = document.querySelector("#transparent-background").checked;
         const selectedAngleId = selectedAngleButton?.dataset.angleId || "angle_center";
         const debugMetadata = { selectedAngleId, selectedAngleLabel: angle };
-        console.debug("Chrome Smith Generate debug:", debugMetadata);
-        const { ok, data } = await postJson("/api/generate", { prompt: description, selectedAngleId, resolution, transparentBackground, debugMetadata });
+        const requestInfo = { prompt: description, selectedAngleId, selectedAngleLabel: angle };
+        const requestPayload = { prompt: description, selectedAngleId, resolution, transparentBackground, debugMetadata };
+        const debugPreview = await postJson("/api/generate/debug", requestPayload);
+        if (!debugPreview.ok || debugPreview.data.ok === false) throw new Error(debugPreview.data.message || "Generate debug preview failed.");
+        renderGenerateDebugPreview(debugPreview.data, requestInfo);
+        const { ok, data } = await postJson("/api/generate", requestPayload);
         if (!ok || data.ok === false) throw new Error(data.message || (typeof data.error === "string" ? data.error : "Generation failed."));
         if (!data.image) throw new Error("Generate completed but did not return an image.");
+        renderGenerateDebugPreview(data, requestInfo);
         const outputImage = await prepareResolutionOutput(data.image, resolution);
         const image = output.querySelector(".generated-image");
         image.src = outputImage.image;
@@ -553,40 +693,160 @@
       }
     }));
     function saveHistory() {
-      while (assetLibrary.length) {
+      const metadata = assetLibrary.map(item => {
+        const copy = { ...item };
+        delete copy.image;
+        delete copy.imageDataUrl;
+        delete copy.imageUrl;
+        delete copy.dataUrl;
+        delete copy.src;
+        delete copy.legacyImageSource;
+        return copy;
+      });
+      try {
+        if (metadata.length) localStorage.setItem(HISTORY_KEY, JSON.stringify(metadata));
+        else localStorage.removeItem(HISTORY_KEY);
+      } catch (error) {
+        localStorage.removeItem(HISTORY_KEY);
         try {
-          localStorage.setItem(HISTORY_KEY, JSON.stringify(assetLibrary));
-          return;
-        } catch {
-          assetLibrary.pop();
+          if (metadata.length) localStorage.setItem(HISTORY_KEY, JSON.stringify(metadata));
+        } catch (retryError) {
+          console.warn("Chrome Smith could not save history metadata:", retryError.message || error.message);
         }
       }
-      localStorage.removeItem(HISTORY_KEY);
     }
-    function getPersistedImage(source) {
-      return new Promise(async resolve => {
-        try {
-          const url = source.startsWith("data:") ? source : `/api/download?url=${encodeURIComponent(source)}`;
-          const response = await fetch(url);
-          if (!response.ok) throw new Error("Could not prepare image history.");
-          const blob = await response.blob();
-          const objectUrl = URL.createObjectURL(blob);
-          const image = new Image();
-          image.onload = () => {
-            const scale = Math.min(1, 900 / Math.max(image.width, image.height));
-            const canvas = document.createElement("canvas");
-            canvas.width = Math.max(1, Math.round(image.width * scale));
-            canvas.height = Math.max(1, Math.round(image.height * scale));
-            canvas.getContext("2d").drawImage(image, 0, 0, canvas.width, canvas.height);
-            URL.revokeObjectURL(objectUrl);
-            resolve(canvas.toDataURL("image/png"));
-          };
-          image.onerror = () => { URL.revokeObjectURL(objectUrl); resolve(source); };
-          image.src = objectUrl;
-        } catch {
-          resolve(source);
+    function isValidDataImage(source) {
+      return typeof source === "string" && source.startsWith("data:image/");
+    }
+    function isValidHistoryImageSource(source) {
+      if (typeof source !== "string" || !source.trim()) return false;
+      if (source.startsWith("blob:")) return false;
+      return isValidDataImage(source) || source.startsWith("/recovered-assets/") || source.startsWith("http://") || source.startsWith("https://");
+    }
+    function getLegacyHistoryImageSource(item) {
+      if (!item || typeof item !== "object") return "";
+      return [item.imageDataUrl, item.image, item.imageUrl, item.dataUrl, item.src, item.legacyImageSource].find(isValidHistoryImageSource) || "";
+    }
+    function normalizeHistoryItem(item = {}) {
+      const id = item.id || `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      const imageSource = getLegacyHistoryImageSource(item);
+      const normalized = {
+        ...item,
+        id,
+        type: item.type || "generate",
+        prompt: item.prompt || item.description || "",
+        action: item.action || item.angle || "",
+        createdAt: item.createdAt || item.timestamp || new Date().toISOString(),
+        mimeType: item.mimeType || "image/png",
+        settings: item.settings || {},
+        imageStorageKey: item.imageStorageKey || id,
+        imageAvailable: item.imageAvailable !== false
+      };
+      delete normalized.image;
+      delete normalized.imageDataUrl;
+      delete normalized.imageUrl;
+      delete normalized.dataUrl;
+      delete normalized.src;
+      if (imageSource) normalized.legacyImageSource = imageSource;
+      return normalized;
+    }
+    function openHistoryDb() {
+      if (historyDbPromise) return historyDbPromise;
+      historyDbPromise = new Promise((resolve, reject) => {
+        if (!window.indexedDB) {
+          reject(new Error("IndexedDB is not available in this browser."));
+          return;
         }
+        const request = indexedDB.open(HISTORY_DB_NAME, HISTORY_DB_VERSION);
+        request.onupgradeneeded = () => {
+          const db = request.result;
+          if (!db.objectStoreNames.contains(HISTORY_IMAGE_STORE)) {
+            db.createObjectStore(HISTORY_IMAGE_STORE, { keyPath: "id" });
+          }
+        };
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error || new Error("Could not open history image storage."));
       });
+      return historyDbPromise;
+    }
+    async function withHistoryImageStore(mode, callback) {
+      const db = await openHistoryDb();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(HISTORY_IMAGE_STORE, mode);
+        const store = tx.objectStore(HISTORY_IMAGE_STORE);
+        let result;
+        tx.oncomplete = () => resolve(result);
+        tx.onerror = () => reject(tx.error || new Error("History image storage failed."));
+        tx.onabort = () => reject(tx.error || new Error("History image storage aborted."));
+        result = callback(store);
+      });
+    }
+    async function saveHistoryImage(imageStorageKey, imageDataUrl, mimeType = "image/png") {
+      if (!imageStorageKey || !isValidDataImage(imageDataUrl)) return false;
+      await withHistoryImageStore("readwrite", store => store.put({
+        id: imageStorageKey,
+        imageDataUrl,
+        mimeType,
+        savedAt: new Date().toISOString()
+      }));
+      historyImageCache.set(imageStorageKey, imageDataUrl);
+      return true;
+    }
+    async function getHistoryImage(imageStorageKey) {
+      if (!imageStorageKey) return "";
+      if (historyImageCache.has(imageStorageKey)) return historyImageCache.get(imageStorageKey);
+      const record = await withHistoryImageStore("readonly", store => new Promise(resolve => {
+        const request = store.get(imageStorageKey);
+        request.onsuccess = () => resolve(request.result || null);
+        request.onerror = () => resolve(null);
+      }));
+      const imageDataUrl = isValidDataImage(record?.imageDataUrl) ? record.imageDataUrl : "";
+      if (imageDataUrl) historyImageCache.set(imageStorageKey, imageDataUrl);
+      return imageDataUrl;
+    }
+    async function deleteHistoryImage(imageStorageKey) {
+      if (!imageStorageKey) return;
+      historyImageCache.delete(imageStorageKey);
+      await withHistoryImageStore("readwrite", store => store.delete(imageStorageKey));
+    }
+    async function clearHistoryImages(imageStorageKeys) {
+      const keys = [...new Set(imageStorageKeys.filter(Boolean))];
+      if (!keys.length) return;
+      keys.forEach(key => historyImageCache.delete(key));
+      await withHistoryImageStore("readwrite", store => keys.forEach(key => store.delete(key)));
+    }
+    function dataUrlFromBlob(blob) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(reader.error || new Error("Could not read history image."));
+        reader.readAsDataURL(blob);
+      });
+    }
+    async function fetchImageAsDataUrl(source) {
+      if (!isValidHistoryImageSource(source) || source.startsWith("blob:")) return "";
+      if (isValidDataImage(source)) return source;
+      const url = source.startsWith("http") ? source : new URL(source, window.location.href).href;
+      const response = await fetch(url, { cache: "no-store" });
+      if (!response.ok) throw new Error(`Could not fetch history image (${response.status}).`);
+      const blob = await response.blob();
+      if (!blob.type.startsWith("image/")) throw new Error("Recovered history image is not an image.");
+      return dataUrlFromBlob(blob);
+    }
+    async function getPersistedImage(source) {
+      try {
+        return await fetchImageAsDataUrl(source);
+      } catch {
+        return isValidDataImage(source) ? source : "";
+      }
+    }
+    function revealGenerateHistory() {
+      document.querySelector('[data-page="generate"]')?.click();
+      renderHistories();
+      document.querySelector('#generate [data-history-scope="generate"]')?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+    function isHistoryCommand(prompt) {
+      return /^(show\s+(my\s+)?history|generation\s+history|give\s+me\s+my\s+generation\s+history|show\s+my\s+generation\s+history)$/i.test(String(prompt || "").trim());
     }
     function createDemoImage(type) {
       const canvas = document.createElement("canvas");
@@ -662,32 +922,68 @@
       return page.id === "array" ? { layout: getAssetAction(page), sourceCount: getUploadedSources(page).length, resolution } : { resolution };
     }
     async function addAsset(asset) {
-      const image = await getPersistedImage(asset.image);
-      const item = { id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, ...asset, image, createdAt: new Date().toISOString() };
-      const duplicate = assetLibrary.find(entry => entry.type === item.type && entry.image === item.image && entry.action === item.action);
+      const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      const imageStorageKey = asset.imageStorageKey || id;
+      const image = await getPersistedImage(asset.image || asset.imageDataUrl || asset.imageUrl || asset.dataUrl || asset.src);
+      const imageAvailable = await saveHistoryImage(imageStorageKey, image, asset.mimeType || "image/png");
+      const item = normalizeHistoryItem({
+        id,
+        ...asset,
+        imageStorageKey,
+        imageAvailable,
+        mimeType: asset.mimeType || "image/png",
+        createdAt: new Date().toISOString()
+      });
+      if (imageAvailable) delete item.legacyImageSource;
+      const duplicate = assetLibrary.find(entry => entry.type === item.type && entry.prompt === item.prompt && entry.action === item.action && entry.createdAt === item.createdAt);
       if (duplicate) assetLibrary = assetLibrary.filter(entry => entry.id !== duplicate.id);
       assetLibrary.unshift(item);
       selectedAssetId = item.id;
       saveHistory();
       renderHistories();
     }
-    async function normalizeStoredImages() {
-      let changed = false;
+    async function migrateHistoryImages() {
+      const stats = { total: assetLibrary.length, validIndexedDbImages: 0, unavailableImages: 0, migratedOldDataUrlItems: 0, migratedRecoveredPathItems: 0, skippedBlobOrInvalidItems: 0 };
+      assetLibrary = assetLibrary.map(item => normalizeHistoryItem(item));
       for (const item of assetLibrary) {
-        if (!item.image.startsWith("data:image/png")) {
-          item.image = await getPersistedImage(item.image);
-          changed = true;
+        const existingImage = await getHistoryImage(item.imageStorageKey);
+        if (existingImage) {
+          item.imageAvailable = true;
+          stats.validIndexedDbImages += 1;
+          continue;
         }
+        const legacyImageSource = item.legacyImageSource;
+        if (isValidDataImage(legacyImageSource)) {
+          const saved = await saveHistoryImage(item.imageStorageKey, legacyImageSource, item.mimeType);
+          item.imageAvailable = saved;
+          stats.migratedOldDataUrlItems += saved ? 1 : 0;
+          stats.validIndexedDbImages += saved ? 1 : 0;
+        } else if (legacyImageSource?.startsWith("/recovered-assets/") || legacyImageSource?.startsWith("http://") || legacyImageSource?.startsWith("https://")) {
+          try {
+            const migratedImage = await fetchImageAsDataUrl(legacyImageSource);
+            const saved = await saveHistoryImage(item.imageStorageKey, migratedImage, item.mimeType);
+            item.imageAvailable = saved;
+            stats.migratedRecoveredPathItems += saved ? 1 : 0;
+            stats.validIndexedDbImages += saved ? 1 : 0;
+          } catch (error) {
+            item.imageAvailable = false;
+            stats.unavailableImages += 1;
+            console.warn("Chrome Smith history image migration skipped:", { id: item.id, source: legacyImageSource, message: error.message });
+          }
+        } else {
+          item.imageAvailable = false;
+          stats.skippedBlobOrInvalidItems += legacyImageSource?.startsWith("blob:") || legacyImageSource ? 1 : 0;
+          stats.unavailableImages += 1;
+        }
+        delete item.legacyImageSource;
       }
-      if (changed) {
-        saveHistory();
-        const selected = assetLibrary.find(item => item.id === selectedAssetId);
-        if (selected) showPreview(selected.type, selected.image);
-        renderHistories();
-      }
+      stats.unavailableImages = assetLibrary.filter(item => item.imageAvailable === false).length;
+      saveHistory();
+      console.debug("Chrome Smith history loaded:", stats);
     }
     function showPreview(type, source) {
       const page = document.querySelector(`#${type}`);
+      if (!page || !isValidHistoryImageSource(source)) return;
       const output = page.querySelector("[data-output]");
       output.querySelector(".empty-state").style.display = "none";
       output.querySelector(".loading").classList.remove("show");
@@ -704,29 +1000,34 @@
         output.querySelector(".empty-state").style.display = "";
       });
     }
-    function selectAsset(id) {
+    async function selectAsset(id) {
       const item = assetLibrary.find(entry => entry.id === id);
       if (!item) return;
       selectedAssetId = id;
       document.querySelector(`[data-page="${item.type}"]`).click();
-      showPreview(item.type, item.image);
+      const imageSource = await getHistoryImage(item.imageStorageKey);
+      if (imageSource) showPreview(item.type, imageSource);
       renderHistories();
     }
-    function deleteAsset(id) {
+    async function deleteAsset(id) {
+      const item = assetLibrary.find(entry => entry.id === id);
       assetLibrary = assetLibrary.filter(item => item.id !== id);
       checkedAssetIds.delete(id);
       if (selectedAssetId === id) selectedAssetId = assetLibrary[0]?.id || null;
+      await deleteHistoryImage(item?.imageStorageKey);
       saveHistory();
       if (selectedAssetId) selectAsset(selectedAssetId); else { resetPreviews(); renderHistories(); }
     }
     async function downloadAsset(item) {
+      const imageSource = await getHistoryImage(item.imageStorageKey) || getLegacyHistoryImageSource(item);
+      if (!imageSource) throw new Error("Image unavailable for this history item.");
       const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
       const filename = `chrome-smith-${item.type}-${item.id}-${timestamp}`;
-      if (!item.image.startsWith("data:")) {
-        triggerDownload(`/api/download?url=${encodeURIComponent(item.image)}&filename=${encodeURIComponent(filename)}`, filename);
+      if (!imageSource.startsWith("data:")) {
+        triggerDownload(`/api/download?url=${encodeURIComponent(new URL(imageSource, window.location.href).href)}&filename=${encodeURIComponent(filename)}`, filename);
         return;
       }
-      const response = await fetch("/api/downloads", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ image: item.image, filename }) });
+      const response = await fetch("/api/downloads", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ image: imageSource, filename }) });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Could not prepare download.");
       triggerDownload(data.url, filename);
@@ -741,6 +1042,36 @@
       const filter = scope === "all" ? libraryFilter : scope;
       return assetLibrary.filter(item => filter === "all" || item.type === filter);
     }
+    function createUnavailableHistoryImage() {
+      const unavailable = document.createElement("div");
+      unavailable.className = "history-image-unavailable";
+      unavailable.textContent = "Image unavailable";
+      return unavailable;
+    }
+    async function renderHistoryCardImage(item, shell) {
+      try {
+        const imageSource = await getHistoryImage(item.imageStorageKey);
+        shell.innerHTML = "";
+        if (!imageSource) {
+          item.imageAvailable = false;
+          shell.replaceWith(createUnavailableHistoryImage());
+          return;
+        }
+        item.imageAvailable = true;
+        const image = document.createElement("img");
+        image.className = "history-image";
+        image.src = imageSource;
+        image.alt = item.prompt || item.action || `${item.type} asset`;
+        image.onerror = () => {
+          item.imageAvailable = false;
+          shell.replaceWith(createUnavailableHistoryImage());
+        };
+        shell.append(image);
+      } catch {
+        item.imageAvailable = false;
+        shell.replaceWith(createUnavailableHistoryImage());
+      }
+    }
     function renderHistory(panel) {
       const grid = panel.querySelector("[data-history-grid]");
       const scope = panel.dataset.historyScope;
@@ -752,6 +1083,8 @@
       panel.querySelector("[data-download-selected]").disabled = checkedAssetIds.size === 0;
       panel.querySelector("[data-delete-selected]").disabled = checkedAssetIds.size === 0;
       panel.querySelector("[data-clear-scope]").disabled = visibleAssets.length === 0;
+      const brokenAssets = visibleAssets.filter(item => item.imageAvailable === false);
+      panel.querySelector("[data-clear-broken]")?.toggleAttribute("disabled", brokenAssets.length === 0);
       if (!visibleAssets.length) {
         const empty = document.createElement("div");
         empty.className = "history-empty";
@@ -765,9 +1098,18 @@
         card.tabIndex = 0;
         card.setAttribute("role", "button");
         card.setAttribute("aria-label", `View ${item.type} asset`);
-        card.addEventListener("click", () => selectAsset(item.id));
-        card.addEventListener("keydown", event => { if (event.key === "Enter" || event.key === " ") selectAsset(item.id); });
-        const image = document.createElement("img"); image.className = "history-image"; image.src = item.image; image.alt = item.prompt || item.action || `${item.type} asset`;
+        card.addEventListener("click", () => selectAsset(item.id).catch(error => console.warn("Chrome Smith history selection failed:", error.message)));
+        card.addEventListener("keydown", event => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            selectAsset(item.id).catch(error => console.warn("Chrome Smith history selection failed:", error.message));
+          }
+        });
+        const imageShell = document.createElement("div");
+        imageShell.className = "history-image-shell";
+        imageShell.append(createUnavailableHistoryImage());
+        card.append(imageShell);
+        renderHistoryCardImage(item, imageShell);
         const meta = document.createElement("div"); meta.className = "history-meta";
         const prompt = document.createElement("div"); prompt.className = "history-prompt"; prompt.textContent = item.prompt || item.action || `${item.type} asset`;
         const detail = document.createElement("div"); detail.className = "history-detail"; detail.textContent = new Date(item.createdAt).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
@@ -778,15 +1120,16 @@
         const actions = document.createElement("div"); actions.className = "asset-actions";
         const download = document.createElement("button"); download.className = "asset-action"; download.type = "button"; download.setAttribute("aria-label", `Download ${item.type} asset`); download.innerHTML = '<i class="ti ti-download"></i>'; download.addEventListener("click", event => { event.stopPropagation(); downloadAsset(item).catch(error => alert(error.message)); });
         const remove = document.createElement("button"); remove.className = "delete-history"; remove.type = "button"; remove.setAttribute("aria-label", `Delete ${item.type} asset`); remove.innerHTML = '<i class="ti ti-x"></i>';
-        remove.addEventListener("click", event => { event.stopPropagation(); deleteAsset(item.id); });
-        meta.append(prompt, detail); actions.append(remove, download); card.append(image); if (scope === "all") card.append(badge); card.append(check, meta, actions); grid.append(card);
+        remove.addEventListener("click", event => { event.stopPropagation(); deleteAsset(item.id).catch(error => alert(error.message)); });
+        meta.append(prompt, detail); actions.append(remove, download); if (scope === "all") card.append(badge); card.append(check, meta, actions); grid.append(card);
       });
     }
     function renderHistories() {
       document.querySelectorAll("[data-history-scope]").forEach(renderHistory);
     }
-    document.querySelector("[data-clear-history]").addEventListener("click", () => {
+    document.querySelector("[data-clear-history]").addEventListener("click", async () => {
       if (!assetLibrary.length || !confirm("Clear all saved assets?")) return;
+      await clearHistoryImages(assetLibrary.map(item => item.imageStorageKey));
       assetLibrary = []; selectedAssetId = null; checkedAssetIds.clear(); resetPreviews(); saveHistory(); renderHistories();
     });
     document.querySelectorAll("[data-library-filter]").forEach(button => button.addEventListener("click", () => {
@@ -794,28 +1137,75 @@
       document.querySelectorAll("[data-library-filter]").forEach(item => item.classList.toggle("active", item === button));
       renderHistories();
     }));
-    document.querySelectorAll("[data-download-selected]").forEach(button => button.addEventListener("click", () => assetLibrary.filter(item => checkedAssetIds.has(item.id)).forEach((item, index) => setTimeout(() => downloadAsset(item).catch(error => alert(error.message)), index * 250))));
-    document.querySelectorAll("[data-delete-selected]").forEach(button => button.addEventListener("click", () => {
+    document.querySelectorAll("[data-download-selected]").forEach(button => button.addEventListener("click", async () => {
+      const selected = assetLibrary.filter(item => checkedAssetIds.has(item.id));
+      const imageChecks = await Promise.all(selected.map(async item => ({ item, image: await getHistoryImage(item.imageStorageKey) })));
+      const downloadable = imageChecks.filter(entry => entry.image).map(entry => entry.item);
+      const skipped = selected.length - downloadable.length;
+      if (skipped) alert(`${skipped} selected history item${skipped === 1 ? "" : "s"} skipped because the image is unavailable.`);
+      downloadable.forEach((item, index) => setTimeout(() => downloadAsset(item).catch(error => alert(error.message)), index * 250));
+    }));
+    document.querySelectorAll("[data-delete-selected]").forEach(button => button.addEventListener("click", async () => {
       if (!checkedAssetIds.size || !confirm("Delete selected assets?")) return;
+      const deletedKeys = assetLibrary.filter(item => checkedAssetIds.has(item.id)).map(item => item.imageStorageKey);
+      await clearHistoryImages(deletedKeys);
       assetLibrary = assetLibrary.filter(item => !checkedAssetIds.has(item.id)); checkedAssetIds.clear();
       if (!assetLibrary.some(item => item.id === selectedAssetId)) selectedAssetId = assetLibrary[0]?.id || null;
       saveHistory(); if (selectedAssetId) selectAsset(selectedAssetId); else { resetPreviews(); renderHistories(); }
     }));
-    document.querySelectorAll("[data-clear-scope]").forEach(button => button.addEventListener("click", () => {
+    document.querySelectorAll("[data-clear-broken]").forEach(button => button.addEventListener("click", async () => {
+      const panel = button.closest("[data-history-scope]");
+      const brokenItems = getVisibleAssets(panel).filter(item => item.imageAvailable === false);
+      if (!brokenItems.length || !confirm(`Clear ${brokenItems.length} unavailable history item${brokenItems.length === 1 ? "" : "s"}?`)) return;
+      await clearHistoryImages(brokenItems.map(item => item.imageStorageKey));
+      const brokenIds = new Set(brokenItems.map(item => item.id));
+      assetLibrary = assetLibrary.filter(item => !brokenIds.has(item.id));
+      checkedAssetIds.clear();
+      if (!assetLibrary.some(item => item.id === selectedAssetId)) selectedAssetId = assetLibrary[0]?.id || null;
+      saveHistory(); if (selectedAssetId) selectAsset(selectedAssetId); else { resetPreviews(); renderHistories(); }
+    }));
+    document.querySelectorAll("[data-clear-scope]").forEach(button => button.addEventListener("click", async () => {
       const panel = button.closest("[data-history-scope]");
       const scope = panel.dataset.historyScope === "all" ? libraryFilter : panel.dataset.historyScope;
       const label = scope === "all" ? "all assets" : `${scope} assets`;
       if (!assetLibrary.length || !confirm(`Clear ${label}?`)) return;
+      const deletedKeys = assetLibrary.filter(item => scope === "all" || item.type === scope).map(item => item.imageStorageKey);
+      await clearHistoryImages(deletedKeys);
       assetLibrary = scope === "all" ? [] : assetLibrary.filter(item => item.type !== scope);
       checkedAssetIds.clear(); if (!assetLibrary.some(item => item.id === selectedAssetId)) selectedAssetId = assetLibrary[0]?.id || null;
       saveHistory(); if (selectedAssetId) selectAsset(selectedAssetId); else { resetPreviews(); renderHistories(); }
     }));
-    try { assetLibrary = JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]"); } catch { assetLibrary = []; }
-    if (!assetLibrary.length) {
-      try { assetLibrary = JSON.parse(localStorage.getItem(LEGACY_HISTORY_KEY) || "[]").map(item => ({ ...item, type: "generate", action: item.angle })); localStorage.removeItem(LEGACY_HISTORY_KEY); saveHistory(); } catch {}
+    async function restoreHistory() {
+      try { assetLibrary = JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]").map(normalizeHistoryItem); } catch { assetLibrary = []; }
+      if (!assetLibrary.length) {
+        try { assetLibrary = JSON.parse(localStorage.getItem(LEGACY_HISTORY_KEY) || "[]").map(item => normalizeHistoryItem({ ...item, type: "generate", action: item.angle })); localStorage.removeItem(LEGACY_HISTORY_KEY); saveHistory(); } catch {}
+      }
+      try {
+        const response = await fetch("/api/recovered-history", { cache: "no-store" });
+        if (response.ok) {
+          const recoveredPayload = await response.json();
+          const recovered = Array.isArray(recoveredPayload) ? recoveredPayload.map(normalizeHistoryItem) : [];
+          if (Array.isArray(recovered) && recovered.length) {
+            const recoveredById = new Map(recovered.filter(item => item && item.id).map(item => [item.id, item]));
+            const seenIds = new Set();
+            assetLibrary = assetLibrary.map(item => {
+              seenIds.add(item.id);
+              const recoveredItem = recoveredById.get(item.id);
+              return recoveredItem && !String(item.image || "").startsWith("/recovered-assets/") ? { ...item, ...recoveredItem } : item;
+            });
+            assetLibrary.push(...recovered.filter(item => item && item.id && !seenIds.has(item.id)));
+            assetLibrary.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+            saveHistory();
+          }
+        }
+      } catch (error) {
+        console.warn("Chrome Smith history recovery skipped:", error.message);
+      }
+      await migrateHistoryImages();
+      renderHistories();
+      if (assetLibrary.length) selectAsset(assetLibrary[0].id).catch(error => console.warn("Chrome Smith history selection failed:", error.message));
     }
-    if (assetLibrary.length) selectAsset(assetLibrary[0].id); else renderHistories();
-    normalizeStoredImages();
+    restoreHistory();
     document.querySelectorAll("[data-download]").forEach(button => button.addEventListener("click", () => {
       const page = button.closest(".page");
       const output = page.querySelector("[data-output]");

@@ -385,11 +385,11 @@ function getContentType(filePath) {
   return "application/octet-stream";
 }
 
-function serveStaticFile(requestUrl, response) {
+function serveStaticFile(requestUrl, response, allowedDirectory = "reference-library") {
   const decodedPath = decodeURIComponent(new URL(requestUrl, "http://localhost").pathname);
   const relativePath = decodedPath.replace(/^\/+/, "");
   const filePath = path.normalize(path.join(ROOT, relativePath));
-  const allowedRoot = path.join(ROOT, "reference-library");
+  const allowedRoot = path.join(ROOT, allowedDirectory);
   if (!filePath.startsWith(allowedRoot + path.sep) && filePath !== allowedRoot) {
     json(response, 403, { error: "Forbidden." });
     return;
@@ -426,10 +426,32 @@ const server = http.createServer(async (request, response) => {
     return;
   }
 
+  if (request.method === "GET" && new URL(request.url, "http://localhost").pathname.startsWith("/recovered-assets/")) {
+    serveStaticFile(request.url, response, "recovered-assets");
+    return;
+  }
+
   if (request.method === "GET" && request.url === "/api/health") {
     json(response, 200, {
       ready: Boolean(process.env.API_BASE_URL && process.env.OPENAI_API_KEY && process.env.OPENAI_IMAGE_MODEL)
     });
+    return;
+  }
+
+  if (request.method === "GET" && request.url === "/api/recovered-history") {
+    const recoveredHistoryFile = fs.existsSync(path.join(ROOT, "recovered-chrome-smith-history.paths.json"))
+      ? path.join(ROOT, "recovered-chrome-smith-history.paths.json")
+      : path.join(ROOT, "recovered-chrome-smith-history.json");
+    if (!fs.existsSync(recoveredHistoryFile)) {
+      json(response, 404, { ok: false, assets: [] });
+      return;
+    }
+    response.writeHead(200, {
+      "Content-Type": "application/json; charset=utf-8",
+      "Cache-Control": "no-store",
+      ...corsHeaders()
+    });
+    fs.createReadStream(recoveredHistoryFile).pipe(response);
     return;
   }
 
@@ -465,6 +487,21 @@ const server = http.createServer(async (request, response) => {
         resolvedSelectedAngleLabel: promptPlan.selectedAngle.label,
         assetCategory: promptPlan.assetCategory,
         material: promptPlan.material,
+        autoSelectedMaterial: promptPlan.debugMetadata?.autoSelectedMaterial,
+        materialSelectionReason: promptPlan.debugMetadata?.materialSelectionReason,
+        genericFormProfile: promptPlan.debugMetadata?.genericFormProfile,
+        formProfile: promptPlan.debugMetadata?.formProfile,
+        detectedConcept: promptPlan.debugMetadata?.detectedConcept,
+        literalSubject: promptPlan.debugMetadata?.literalSubject,
+        metaphorTerms: promptPlan.debugMetadata?.metaphorTerms || [],
+        searchedReferenceTerms: promptPlan.debugMetadata?.searchedReferenceTerms || [],
+        selectedPrimaryReference: promptPlan.debugMetadata?.selectedPrimaryReference || null,
+        selectedReferenceReason: promptPlan.debugMetadata?.selectedReferenceReason,
+        selectedReferenceRole: promptPlan.debugMetadata?.selectedReferenceRole,
+        selectedReferenceScore: promptPlan.debugMetadata?.selectedReferenceScore,
+        fallbackUsed: promptPlan.debugMetadata?.fallbackUsed,
+        selectedReferenceIds: promptPlan.debugMetadata?.selectedReferenceIds || promptPlan.selectedReferences.map(reference => reference.id),
+        attachedReferenceOrder: promptPlan.debugMetadata?.attachedReferenceOrder || [],
         selectedAngleReferencePath: promptPlan.selectedAngle.path,
         selectedAngleReferenceAttached: true,
         selectedStyleReferenceIds: promptPlan.selectedReferences.map(reference => reference.id),
@@ -510,6 +547,8 @@ const server = http.createServer(async (request, response) => {
           material: promptPlan.material,
           selectedAngle: promptPlan.selectedAngle,
           selectedReferences: promptPlan.selectedReferences,
+          debugMetadata: promptPlan.debugMetadata,
+          finalPrompt: promptPlan.finalPrompt,
           debug: safeDebug
         },
         debug: safeDebug
@@ -525,6 +564,90 @@ const server = http.createServer(async (request, response) => {
         ok: false,
         error: true,
         message: error.message || "Generation failed.",
+        debug
+      });
+    }
+    return;
+  }
+
+  if (request.method === "POST" && request.url === "/api/generate/debug") {
+    let safeDebug = {};
+    try {
+      const { prompt, selectedAngleId = "angle_center", resolution = "1K", transparentBackground = true, debugMetadata = {} } = await readJson(request);
+      safeDebug = {
+        clientSelectedAngleId: selectedAngleId,
+        clientSelectedAngleLabel: typeof debugMetadata.selectedAngleLabel === "string" ? debugMetadata.selectedAngleLabel : null,
+        resolution
+      };
+      if (typeof prompt !== "string" || !prompt.trim()) {
+        json(response, 400, { ok: false, error: true, message: "Enter a prompt before generating.", debug: safeDebug });
+        return;
+      }
+      getResolutionMetadata(resolution);
+      if (typeof transparentBackground !== "boolean") {
+        json(response, 400, { ok: false, error: true, message: "Transparent background must be enabled or disabled.", debug: safeDebug });
+        return;
+      }
+      const promptPlan = buildPrompt({
+        feature: "generate",
+        userPrompt: prompt.trim(),
+        selectedAngleId
+      });
+      const selectedAngleReferencePath = getReferenceLibraryFilePath(promptPlan.selectedAngle.path);
+      const selectedStyleReferencePaths = promptPlan.selectedReferences.map(reference => getReferenceLibraryFilePath(reference.path));
+      const referenceImages = [selectedAngleReferencePath, ...selectedStyleReferencePaths];
+      safeDebug = {
+        ...safeDebug,
+        resolvedSelectedAngleId: promptPlan.selectedAngle.id,
+        resolvedSelectedAngleLabel: promptPlan.selectedAngle.label,
+        assetCategory: promptPlan.assetCategory,
+        material: promptPlan.material,
+        autoSelectedMaterial: promptPlan.debugMetadata?.autoSelectedMaterial,
+        materialSelectionReason: promptPlan.debugMetadata?.materialSelectionReason,
+        genericFormProfile: promptPlan.debugMetadata?.genericFormProfile,
+        formProfile: promptPlan.debugMetadata?.formProfile,
+        detectedConcept: promptPlan.debugMetadata?.detectedConcept,
+        literalSubject: promptPlan.debugMetadata?.literalSubject,
+        metaphorTerms: promptPlan.debugMetadata?.metaphorTerms || [],
+        searchedReferenceTerms: promptPlan.debugMetadata?.searchedReferenceTerms || [],
+        selectedPrimaryReference: promptPlan.debugMetadata?.selectedPrimaryReference || null,
+        selectedReferenceReason: promptPlan.debugMetadata?.selectedReferenceReason,
+        selectedReferenceRole: promptPlan.debugMetadata?.selectedReferenceRole,
+        selectedReferenceScore: promptPlan.debugMetadata?.selectedReferenceScore,
+        fallbackUsed: promptPlan.debugMetadata?.fallbackUsed,
+        selectedReferenceIds: promptPlan.debugMetadata?.selectedReferenceIds || promptPlan.selectedReferences.map(reference => reference.id),
+        attachedReferenceOrder: promptPlan.debugMetadata?.attachedReferenceOrder || [],
+        selectedAngleReferencePath: promptPlan.selectedAngle.path,
+        selectedAngleReferenceAttached: true,
+        selectedStyleReferenceIds: promptPlan.selectedReferences.map(reference => reference.id),
+        selectedStyleReferencePaths: promptPlan.selectedReferences.map(reference => reference.path),
+        selectedStyleReferenceCount: promptPlan.selectedReferences.length,
+        attachedReferenceImageCount: referenceImages.length,
+        finalPromptPreview: getPromptPreview(promptPlan.finalPrompt)
+      };
+      json(response, 200, {
+        ok: true,
+        promptBuilder: {
+          assetCategory: promptPlan.assetCategory,
+          material: promptPlan.material,
+          selectedAngle: promptPlan.selectedAngle,
+          selectedReferences: promptPlan.selectedReferences,
+          debugMetadata: promptPlan.debugMetadata,
+          finalPrompt: promptPlan.finalPrompt,
+          debug: safeDebug
+        },
+        debug: safeDebug
+      });
+    } catch (error) {
+      const debug = {
+        ...safeDebug,
+        ...(error.debug || {}),
+        messagePreview: truncateText(error.message)
+      };
+      json(response, 502, {
+        ok: false,
+        error: true,
+        message: error.message || "Generate debug preview failed.",
         debug
       });
     }

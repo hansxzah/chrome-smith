@@ -20,6 +20,13 @@ const MATERIALS = {
   METALLIC_CHROME_BASE: "metallic_chrome_base"
 };
 
+const REFERENCE_ROLES = {
+  STYLE_ARCHETYPE: "style_archetype_reference",
+  MATERIAL: "material_reference",
+  SUBJECT_ARCHETYPE: "subject_archetype_reference",
+  ANGLE: "angle_reference"
+};
+
 function readJson(relativePath) {
   return JSON.parse(fs.readFileSync(path.join(ROOT, relativePath), "utf8"));
 }
@@ -74,6 +81,19 @@ function classifyAssetCategory(userPrompt) {
 
   if (hasAny(text, cryptoPatterns)) return ASSET_CATEGORIES.CRYPTO;
   if (hasAny(text, productPatterns)) return ASSET_CATEGORIES.PRODUCT_TILE;
+  if (
+    hasAny(text, genericPatterns) &&
+    /\bred\b|\bsilver\b|\bchrome\b|\bmetallic\b/.test(text) &&
+    !hasAny(text, [
+      /\bstock\b/, /\bindex\b/, /\bcommodity\b/, /\bforex\b/, /\bforex pair\b/,
+      /\bmarket\b/, /\boil\b/, /\bnvidia\b/, /\bamazon\b/, /\bapple\b/,
+      /\bus500\b/, /\bus\s*500\b/, /\bjpy225\b/, /\bjpy\s*225\b/,
+      /\beur\/usd\b/, /\bdxy\b/, /\bvix\b/, /\busoil\b/, /\bukoil\b/,
+      /\bxauusd\b/, /\bxagusd\b/
+    ])
+  ) {
+    return ASSET_CATEGORIES.GENERIC;
+  }
   if (hasAny(text, marketPatterns)) return ASSET_CATEGORIES.MARKET;
   if (hasAny(text, genericPatterns)) return ASSET_CATEGORIES.GENERIC;
 
@@ -114,10 +134,361 @@ function classifyMaterial(userPrompt, assetCategory) {
   return MATERIALS.PLAIN_CHROME;
 }
 
+function classifyMaterialWithReason(userPrompt, assetCategory) {
+  const text = normalizePrompt(userPrompt);
+  const explicitRedSilver = /\bred and silver\b|\bred\s*\+\s*silver\b|\bred-silver\b|\bred accent\b|\bsilver with red\b|\bchrome with red\b|\bred and silver chrome\b/.test(text);
+  const explicitRed = /\bred chrome\b|\bred metallic\b|\bfully red\b|\bred icon\b|\bred number\b/.test(text);
+  const explicitSilver = /\bsilver chrome\b|\bmetallic chrome\b|\bchrome\b|\bsilver\b/.test(text);
+
+  if (assetCategory !== ASSET_CATEGORIES.GENERIC) {
+    return {
+      material: classifyMaterial(userPrompt, assetCategory),
+      reason: "Category-specific material rule."
+    };
+  }
+
+  if (explicitRedSilver) {
+    return {
+      material: MATERIALS.RED_SILVER_CHROME,
+      reason: "Explicit user material request for red + silver chrome."
+    };
+  }
+  if (explicitRed) {
+    return {
+      material: MATERIALS.PLAIN_RED_CHROME,
+      reason: "Explicit user material request for red chrome."
+    };
+  }
+  if (explicitSilver) {
+    return {
+      material: MATERIALS.PLAIN_CHROME,
+      reason: "Explicit user material request for silver/chrome."
+    };
+  }
+
+  const redSilverPatterns = [
+    /\bshield\b/, /\bsupport\b/, /\bhelp\b/, /\bcustomer service\b/,
+    /\bportfolio\b/, /\btransfer\b/, /\bsecurity\b/, /\bcommunity\b/,
+    /\btrading concept\b/, /\bfinance concept\b/, /\bfintech concept\b/,
+    /\bmulti[-\s]?part\b/, /\btrust\b/, /\bprotection\b/, /\bverification\b/
+  ];
+  const redPatterns = [
+    /\d+\s*%/, /[$€£¥]\s*\d+/, /\bbonus\b/, /\bboost\b/, /\blightning\b/,
+    /\balert\b/, /\burgent\b/, /\bdeposit\b/, /\bupward\b/, /\bup arrow\b/,
+    /\barrow up\b/, /\bgrowth\b/, /\baction\b/, /\bpromo\b/, /\bpromotion\b/,
+    /\bpromotional\b/, /\bdiscount\b/, /\boffer\b/, /\breward\b/, /\bwarning\b/
+  ];
+
+  if (hasAny(text, redSilverPatterns)) {
+    return {
+      material: MATERIALS.RED_SILVER_CHROME,
+      reason: "Auto-selected red + silver metallic chrome for complex fintech, support, trust, security, or multi-part concept icon."
+    };
+  }
+  if (hasAny(text, redPatterns)) {
+    return {
+      material: MATERIALS.PLAIN_RED_CHROME,
+      reason: "Auto-selected plain red metallic chrome for promotional, action, urgency, boost, or emphasis asset."
+    };
+  }
+
+  return {
+    material: MATERIALS.PLAIN_CHROME,
+    reason: "Auto-selected plain metallic chrome for a simple, neutral, utility, or UI-style icon."
+  };
+}
+
 function normalizeSubjectText(value) {
   return String(value || "")
     .toLowerCase()
     .replace(/[^a-z0-9%$€£¥]+/g, "");
+}
+
+function tokenizeSubjectText(value) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/[_+.-]+/g, " ")
+    .replace(/[^a-z0-9%$€£¥\s]+/g, " ")
+    .split(/\s+/)
+    .filter(Boolean);
+}
+
+const CONCEPT_DICTIONARY = [
+  {
+    concept: "support",
+    aliases: ["support", "help", "customer service", "help centre", "help center"],
+    metaphorTerms: ["headset", "agent", "lifebuoy", "chat bubble", "customer care"],
+    preferredReferenceSubjects: ["help centre", "agent", "lifebuoy", "support"],
+    preferredFormProfile: "complex_fintech_object",
+    preferredMaterialBehavior: MATERIALS.RED_SILVER_CHROME
+  },
+  {
+    concept: "security",
+    aliases: ["security", "shield", "protection", "safe", "secure"],
+    metaphorTerms: ["shield", "lock", "safe", "protection", "identity"],
+    preferredReferenceSubjects: ["identity", "shield", "security", "protection"],
+    preferredFormProfile: "low_relief_object",
+    preferredMaterialBehavior: MATERIALS.RED_SILVER_CHROME,
+    blockedReferenceSubjectsUnlessLiteral: ["fingerprint"]
+  },
+  {
+    concept: "fingerprint",
+    aliases: ["fingerprint", "biometric"],
+    metaphorTerms: ["fingerprint", "identity", "verification"],
+    preferredReferenceSubjects: ["fingerprint"],
+    preferredFormProfile: "low_relief_object",
+    preferredMaterialBehavior: MATERIALS.RED_SILVER_CHROME
+  },
+  {
+    concept: "portfolio",
+    aliases: ["portfolio", "folder", "files", "file", "document stack"],
+    metaphorTerms: ["folder", "files", "briefcase", "document", "container"],
+    preferredReferenceSubjects: ["files", "portfolio", "protfolio", "folder", "document"],
+    preferredFormProfile: "realistic_3d_object",
+    preferredMaterialBehavior: MATERIALS.RED_SILVER_CHROME
+  },
+  {
+    concept: "leverage",
+    aliases: ["leverage", "seesaw", "balance"],
+    metaphorTerms: ["seesaw", "balance", "scale", "multiplier", "force", "advantage"],
+    preferredReferenceSubjects: ["leverage", "seesaw", "balance"],
+    preferredFormProfile: "realistic_3d_object",
+    preferredMaterialBehavior: MATERIALS.RED_SILVER_CHROME
+  },
+  {
+    concept: "growth",
+    aliases: ["growth", "arrow up", "upward", "increase"],
+    metaphorTerms: ["arrow up", "chart", "rocket", "plant", "upward movement"],
+    preferredReferenceSubjects: ["fast", "deposit", "trading", "arrow", "growth"],
+    preferredFormProfile: "simple_glyph_icon",
+    preferredMaterialBehavior: MATERIALS.PLAIN_RED_CHROME
+  },
+  {
+    concept: "boost",
+    aliases: ["boost", "speed", "fast", "accelerate"],
+    metaphorTerms: ["rocket", "speedometer", "lightning", "upward arrow", "fast"],
+    preferredReferenceSubjects: ["fast", "deposit", "lightning", "arrow"],
+    preferredFormProfile: "simple_glyph_icon",
+    preferredMaterialBehavior: MATERIALS.PLAIN_RED_CHROME
+  },
+  {
+    concept: "alert",
+    aliases: ["alert", "warning", "urgent"],
+    metaphorTerms: ["warning triangle", "bell", "exclamation", "danger"],
+    preferredReferenceSubjects: ["warning", "alert", "no"],
+    preferredFormProfile: "low_relief_object",
+    preferredMaterialBehavior: MATERIALS.RED_SILVER_CHROME
+  },
+  {
+    concept: "community",
+    aliases: ["community", "people", "group", "network"],
+    metaphorTerms: ["people", "group", "network", "connected nodes"],
+    preferredReferenceSubjects: ["community", "mentorship", "network"],
+    preferredFormProfile: "complex_fintech_object",
+    preferredMaterialBehavior: MATERIALS.RED_SILVER_CHROME
+  },
+  {
+    concept: "transfer",
+    aliases: ["transfer", "exchange", "move money", "movement"],
+    metaphorTerms: ["arrows", "exchange", "movement", "bridge", "trading"],
+    preferredReferenceSubjects: ["transfer", "trading", "p2p", "deposit"],
+    preferredFormProfile: "complex_fintech_object",
+    preferredMaterialBehavior: MATERIALS.RED_SILVER_CHROME
+  },
+  {
+    concept: "verification",
+    aliases: ["verification", "verify", "verified", "check badge"],
+    metaphorTerms: ["check", "badge", "shield-check", "identity"],
+    preferredReferenceSubjects: ["check", "check button", "identity"],
+    preferredFormProfile: "low_relief_object",
+    preferredMaterialBehavior: MATERIALS.RED_SILVER_CHROME
+  },
+  {
+    concept: "timer",
+    aliases: ["timer", "hourglass", "sand clock", "sandclock", "countdown"],
+    metaphorTerms: ["stopwatch", "hourglass", "sandclock", "countdown"],
+    preferredReferenceSubjects: ["sandclock", "hourglass"],
+    preferredFormProfile: "realistic_3d_object",
+    preferredMaterialBehavior: MATERIALS.RED_SILVER_CHROME
+  },
+  {
+    concept: "mail",
+    aliases: ["mail", "email", "envelope", "message"],
+    metaphorTerms: ["mail", "envelope", "message", "folded paper"],
+    preferredReferenceSubjects: ["mail", "envelope"],
+    preferredFormProfile: "low_relief_object",
+    preferredMaterialBehavior: MATERIALS.RED_SILVER_CHROME
+  }
+];
+
+function resolvePromptConcept(userPrompt, assetCategory) {
+  const promptText = normalizePrompt(userPrompt);
+  const promptTokens = new Set(tokenizeSubjectText(userPrompt));
+  const exactTokens = assetCategory === ASSET_CATEGORIES.GENERIC ? extractExactContentTokens(userPrompt) : [];
+
+  if (exactTokens.length) {
+    return {
+      detectedConcept: "literal_glyph",
+      literalSubject: exactTokens.join(" "),
+      metaphorTerms: [],
+      searchedReferenceTerms: exactTokens,
+      preferredReferenceSubjects: [],
+      preferredFormProfile: "simple_glyph_icon",
+      preferredMaterialBehavior: null,
+      fallbackUsed: false
+    };
+  }
+
+  const matched = CONCEPT_DICTIONARY.find(entry =>
+    entry.aliases.some(alias => termMatchesPrompt(alias, promptText, promptTokens))
+  );
+
+  const literalTerms = tokenizeSubjectText(userPrompt)
+    .filter(token => !["icon", "symbol", "asset", "chrome", "red", "silver", "metallic", "and", "the", "a", "an"].includes(token));
+
+  if (!matched) {
+    return {
+      detectedConcept: null,
+      literalSubject: literalTerms.join(" ") || String(userPrompt || "").trim(),
+      metaphorTerms: [],
+      searchedReferenceTerms: [...new Set(literalTerms)],
+      preferredReferenceSubjects: [],
+      preferredFormProfile: null,
+      preferredMaterialBehavior: null,
+      fallbackUsed: true
+    };
+  }
+
+  const searchedReferenceTerms = [
+    ...literalTerms,
+    ...matched.aliases,
+    ...matched.metaphorTerms,
+    ...matched.preferredReferenceSubjects
+  ];
+
+  return {
+    detectedConcept: matched.concept,
+    literalSubject: literalTerms.join(" ") || matched.concept,
+    metaphorTerms: matched.metaphorTerms,
+    searchedReferenceTerms: [...new Set(searchedReferenceTerms.map(term => normalizePrompt(term)).filter(Boolean))],
+    preferredReferenceSubjects: matched.preferredReferenceSubjects,
+    preferredFormProfile: matched.preferredFormProfile,
+    preferredMaterialBehavior: matched.preferredMaterialBehavior,
+    blockedReferenceSubjectsUnlessLiteral: matched.blockedReferenceSubjectsUnlessLiteral || [],
+    fallbackUsed: false
+  };
+}
+
+// manual alias priority map for generic subject/structure references.
+const GENERIC_SUBJECT_ALIASES = [
+  {
+    id: "gear_settings",
+    prompt: ["gear", "settings", "cog"],
+    reference: ["gear", "settings", "cog", "mechanical"],
+    preferredReferenceIds: ["generic_red_silver_gear_red_plus_silver"]
+  },
+  {
+    id: "fingerprint",
+    prompt: ["fingerprint"],
+    reference: ["fingerprint"],
+    preferredReferenceIds: ["generic_red_silver_fingerprint_red_plus_silver"]
+  },
+  {
+    id: "shield_security",
+    prompt: ["shield", "security", "protection", "safe"],
+    reference: ["shield", "security", "protection", "safe", "identity", "verification", "trust"],
+    preferredReferenceIds: ["generic_red_silver_identity_red_plus_silver"],
+    blockedReferenceIds: ["generic_red_silver_fingerprint_red_plus_silver"],
+    blockedUnlessPrompt: ["fingerprint"]
+  },
+  {
+    id: "support_help",
+    prompt: ["support", "help", "customer", "service", "agent", "headset", "centre", "center", "lifebuoy"],
+    reference: ["support", "help", "customer", "service", "agent", "headset", "centre", "center", "lifebuoy"],
+    preferredReferenceIds: ["generic_red_silver_help_centre_red_plus_silver"]
+  },
+  {
+    id: "profile_user",
+    prompt: ["profile", "user", "account"],
+    reference: ["profile", "user", "account", "identity"],
+    preferredReferenceIds: [
+      "generic_silver_profile_silver",
+      "generic_red_profile_red",
+      "generic_red_silver_identity_red_plus_silver"
+    ]
+  },
+  {
+    id: "arrow_growth",
+    prompt: ["arrow", "growth", "upward"],
+    reference: ["arrow", "growth", "upward", "fast", "deposit"],
+    preferredReferenceIds: ["generic_red_fast_red", "generic_red_silver_deposit_red_plus_silver"]
+  },
+  {
+    id: "mail_envelope",
+    prompt: ["mail", "envelope", "message"],
+    reference: ["mail", "envelope", "message"],
+    preferredReferenceIds: ["generic_red_silver_mail_red_plus_silver"]
+  },
+  {
+    id: "folder_portfolio",
+    prompt: ["portfolio", "folder", "file", "files", "document", "container"],
+    reference: ["portfolio", "protfolio", "folder", "file", "files", "document", "container"],
+    preferredReferenceIds: ["generic_red_silver_files_protfolio_red_plus_silver"]
+  },
+  {
+    id: "hourglass_timer",
+    prompt: ["hourglass", "sandclock", "timer"],
+    reference: ["hourglass", "sandclock", "timer"],
+    preferredReferenceIds: ["generic_red_silver_sandclock_red_plus_silver"]
+  },
+  {
+    id: "leverage_balance",
+    prompt: ["leverage", "seesaw", "balance"],
+    reference: ["leverage", "seesaw", "balance"],
+    preferredReferenceIds: ["generic_red_silver_leverage_red_plus_silver"]
+  }
+];
+
+function classifyGenericFormProfile(userPrompt, matchedSubjectReference = null) {
+  const text = normalizePrompt(userPrompt);
+  const referenceText = normalizePrompt(getReferenceSearchText(matchedSubjectReference || {}));
+  const combined = `${text} ${referenceText}`;
+
+  if (extractExactContentTokens(userPrompt).length) {
+    return {
+      id: "simple_glyph_icon",
+      reason: "Literal text/number/symbol prompt; keep exact glyph as a clean 3D asset."
+    };
+  }
+  if (/\bgear\b|\bsettings\b|\bcog\b/.test(combined)) {
+    return {
+      id: "mechanical_object",
+      reason: "Mechanical gear/settings subject; use object depth and sidewalls without over-beveling the face."
+    };
+  }
+  if (/\bhourglass\b|\bsandclock\b|\btimer\b|\blifebuoy\b|\bseesaw\b|\bleverage\b|\bcontainer\b|\bfolder\b|\bfiles?\b|\bportfolio\b|\bprotfolio\b/.test(combined)) {
+    return {
+      id: "realistic_3d_object",
+      reason: "Object-like reference or prompt; preserve volumetric object form instead of a flat icon outline."
+    };
+  }
+  if (/\bmail\b|\benvelope\b|\bcard\b|\bdocument\b|\bbadge\b|\bshield\b|\bsurface\b|\bfingerprint\b|\bidentity\b/.test(combined)) {
+    return {
+      id: "low_relief_object",
+      reason: "Low-relief/surface object; use smooth planes, soft edge thickness, and minimal bevel."
+    };
+  }
+  if (/\bsupport\b|\bhelp\b|\bcustomer\b|\bservice\b|\bagent\b|\bheadset\b|\bcentre\b|\bcenter\b|\btransfer\b|\bsecurity\b|\btrading\b|\bfinance\b|\bcommunity\b/.test(combined)) {
+    return {
+      id: "complex_fintech_object",
+      reason: "Complex fintech/support concept; follow the closest reference structure and object complexity."
+    };
+  }
+
+  return {
+    id: "simple_glyph_icon",
+    reason: "Simple generic symbol/UI prompt; use clean controlled depth without excessive bevel."
+  };
 }
 
 function extractExactContentTokens(userPrompt) {
@@ -281,13 +652,21 @@ function stripLeadingUse(value) {
   return String(value || "").replace(/^Use\s+/i, "");
 }
 
+function stripTrailingPunctuation(value) {
+  return String(value || "").replace(/[.\s]+$/g, "");
+}
+
 function buildColorMaterialRule(assetCategory, material, userPrompt, modules) {
   const text = normalizePrompt(userPrompt);
 
   if (assetCategory === ASSET_CATEGORIES.GENERIC) {
+    const redSilverRule = material === MATERIALS.RED_SILVER_CHROME
+      ? "The final asset must visibly include both red metallic chrome and silver metallic chrome in a meaningful way. Do not output a plain silver asset when red_silver_metallic_chrome is selected. If the matched subject reference contains a red/silver balance, preserve a similar distribution."
+      : "";
     return [
-      stripLeadingUse(modules[`material_${material}`]),
-      "The whole object can be 3D, beveled, extruded, and metallic"
+      stripTrailingPunctuation(stripLeadingUse(modules[`material_${material}`])),
+      "Use controlled edge depth appropriate to the matched reference and selected form profile. Do not default to plain silver chrome unless the auto-selected material is plain_metallic_chrome. If the selected material is plain_red_metallic_chrome, use red metallic chrome clearly. If the selected material is plain_metallic_chrome, use silver metallic chrome clearly.",
+      redSilverRule
     ].join(" ");
   }
 
@@ -324,9 +703,34 @@ function buildColorMaterialRule(assetCategory, material, userPrompt, modules) {
   return stripLeadingUse(modules[`material_${material}`]);
 }
 
-function getPresetInstruction(modules, assetCategory, userPrompt, colorMaterialRule) {
+function buildGenericFormProfileRule(formProfile, matchedSubjectReference) {
+  const base = [
+    `Form profile: ${formProfile.id}.`,
+    `Form reason: ${formProfile.reason}.`
+  ];
+
+  if (matchedSubjectReference) {
+    base.push("Match the closest subject reference's form profile and edge treatment. Do not default to a heavy beveled icon. Use bevels only where the reference uses them. Preserve smooth planar faces and low-relief construction when shown in the reference.");
+  }
+
+  const profileRules = {
+    simple_glyph_icon: "Use a clean simple glyph or UI-symbol form with controlled chrome extrusion. Avoid excessive bevel, chunky rims, and heavy raised outlines.",
+    low_relief_object: "Use smooth planes, soft edge thickness, minimal bevel, and low-relief construction. Do not turn the subject into a thick outline icon.",
+    complex_fintech_object: "Use the closest reference structure and object complexity. Preserve multi-part construction and meaningful details instead of simplifying into a basic UI icon silhouette.",
+    mechanical_object: "Use object depth and sidewalls where structurally needed, but do not over-bevel the face. Bevel only the outer edges and keep functional cutouts/forms clean.",
+    realistic_3d_object: "Preserve object-like volumetric form, realistic parts, and reference depth level. Do not flatten it into an icon outline or add heavy rim stacking by default."
+  };
+
+  base.push(profileRules[formProfile.id] || profileRules.simple_glyph_icon);
+  base.push("Use sidewall thickness only where the reference structure requires it. Avoid thick bevels, raised outlines, heavy rim stacking, and chunky extrusion by default.");
+
+  return base.join(" ");
+}
+
+function getPresetInstruction(modules, assetCategory, userPrompt, colorMaterialRule, options = {}) {
   if (assetCategory === ASSET_CATEGORIES.GENERIC) {
-    return `In the same polished Chrome Smith 3D style as the attached style reference image, create ${userPrompt}. Use ${colorMaterialRule}. Match the attached angle reference exactly. Transparent background.`;
+    const formRule = options.formProfile ? ` ${buildGenericFormProfileRule(options.formProfile, options.matchedSubjectReference)}` : "";
+    return `In the same polished Chrome Smith 3D style as the attached style reference image, create ${userPrompt}. Use ${stripTrailingPunctuation(colorMaterialRule)}.${formRule} Match the attached angle reference exactly. Transparent background.`;
   }
   if (assetCategory === ASSET_CATEGORIES.PRODUCT_TILE) {
     return `Product/social tile preset: In the same smooth 3D tile style as the attached tile reference image, create ${userPrompt}. Use ${colorMaterialRule}. The logo must be a flat printed surface graphic or flush inlay, not beveled, embossed, extruded, raised, or separate. Match the attached angle reference exactly. Transparent background.`;
@@ -348,6 +752,55 @@ function buildAngleInstruction(selectedAngle) {
   ].join(" ");
 }
 
+function getMatchedSubjectReference(selectedReferences) {
+  return selectedReferences.find(reference =>
+    reference.reference_role === REFERENCE_ROLES.SUBJECT_ARCHETYPE ||
+    (reference.reference_roles || []).includes(REFERENCE_ROLES.SUBJECT_ARCHETYPE)
+  ) || null;
+}
+
+function buildReferenceRoleInstruction(modules, matchedSubjectReference, formProfile = null) {
+  if (!matchedSubjectReference) return modules.reference_role_instruction;
+
+  return [
+    "Subject reference mode is active.",
+    `primary subject reference id: ${matchedSubjectReference.id}`,
+    `primary subject reference path: ${matchedSubjectReference.path}`,
+    ...(formProfile ? [`form profile: ${formProfile.id}`, `form profile reason: ${formProfile.reason}`] : []),
+    "User request controls the requested subject.",
+    "The primary subject reference controls the object's structure, silhouette, complexity, form profile, edge treatment, depth level, and visual composition. Match the subject reference's form language closely. Use it as the primary guide for the same general type of object. Do not simplify it into a generic basic icon. Do not ignore complex parts that define the icon.",
+    "Match whether the reference is flat, low-relief, object-like, mechanical, or fully volumetric. Do not convert every reference into a thick beveled icon. Do not add heavy bevels unless the closest reference clearly has heavy bevels.",
+    "Adapt the matched subject reference to the user prompt and auto-selected material. Material selection controls final color/material treatment. Do not copy unwanted text, background, or artifacts.",
+    "Style/material reference controls only surface material, color balance, lighting, and polish. If a style reference is not a close subject match, do not copy its subject.",
+    "Angle reference image controls angle only. Auto-selected material controls final color/material treatment."
+  ].join("\n");
+}
+
+function buildReferenceRetrievalBlock(selectedReferences, selectedAngle, conceptPlan = null) {
+  const lines = [
+    "Chrome Smith selected the internal reference based on the prompt's literal subject and metaphorical meaning. Use the selected internal reference as the visual archetype for style, material behavior, form language, color balance, lighting, complexity, and edge treatment. Create the user-requested subject in that same visual system. Do not copy the reference exactly, and do not ignore it.",
+    `detectedConcept: ${conceptPlan?.detectedConcept || "none"}`,
+    `literalSubject: ${conceptPlan?.literalSubject || "none"}`,
+    `metaphorTerms: ${(conceptPlan?.metaphorTerms || []).join(", ") || "none"}`,
+    `searchedReferenceTerms: ${(conceptPlan?.searchedReferenceTerms || []).join(", ") || "none"}`,
+    `selected angle id: ${selectedAngle.id}`,
+    `selected angle path: ${selectedAngle.path}`,
+    `attached reference order: ${REFERENCE_ROLES.ANGLE}:${selectedAngle.path}`
+  ];
+
+  selectedReferences.forEach((reference, index) => {
+    lines.push(
+      `reference ${index + 1} role: ${reference.reference_role}`,
+      `reference ${index + 1} id: ${reference.id}`,
+      `reference ${index + 1} path: ${reference.path}`,
+      `reference ${index + 1} reference score: ${reference.reference_score}`,
+      `reference ${index + 1} selected reference reason: ${reference.reference_reason}`
+    );
+  });
+
+  return lines.join("\n");
+}
+
 function buildNegativePresetRules() {
   return "No extra objects, no background, no watermark, no unrelated text, no copied reference subject, no floor shadow, no drop shadow, no reflection underneath, no ground plane, no surface plane.";
 }
@@ -358,29 +811,338 @@ function getAngleById(angleId) {
   return angles.find(angle => angle.id === angleId) || angles.find(angle => angle.id === "angle_center") || null;
 }
 
-function selectStyleReferences({ assetCategory, material, userPrompt = "", max = 3 }) {
-  const registry = loadReferenceRegistry();
-  const references = Array.isArray(registry.references) ? registry.references : [];
-  const matches = references.filter(reference => reference.category === assetCategory && reference.material === material);
-  const exactTokens = extractExactContentTokens(userPrompt).map(normalizeSubjectText).filter(Boolean);
+function getReferenceSearchText(reference) {
+  return [
+    reference.id,
+    reference.path,
+    reference.subject_type,
+    reference.shape_type,
+    reference.color_behavior
+  ].join(" ");
+}
 
-  if (!exactTokens.length) return matches.slice(0, max);
+function termMatchesPrompt(term, promptText, promptTokens) {
+  const normalized = normalizePrompt(term).trim();
+  if (!normalized) return false;
+  if (normalized.includes(" ")) {
+    const escaped = normalized.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/\s+/g, "\\s+");
+    return new RegExp(`\\b${escaped}\\b`).test(promptText);
+  }
+  return promptTokens.has(normalized);
+}
 
-  const scored = matches.map((reference, index) => {
-    const subject = normalizeSubjectText(reference.subject_type);
-    const exactSubjectMatch = exactTokens.some(token => subject === token || subject.includes(token));
-    const numericLeakRisk = reference.shape_type === "numerical" && !exactSubjectMatch;
-    const simpleMaterialAnchor = reference.shape_type === "simple_icon" || reference.shape_type === "tile" || reference.shape_type === "coin" || reference.shape_type === "market_asset";
-    return {
-      reference,
-      score: (exactSubjectMatch ? 30 : 0) + (simpleMaterialAnchor ? 10 : 0) - (numericLeakRisk ? 25 : 0) - index / 1000
-    };
+function getGenericAliasMatches(userPrompt) {
+  const promptText = normalizePrompt(userPrompt);
+  const promptTokens = new Set(tokenizeSubjectText(userPrompt));
+  return GENERIC_SUBJECT_ALIASES.filter(group =>
+    group.prompt.some(term => termMatchesPrompt(term, promptText, promptTokens))
+  );
+}
+
+function referenceBlockedByAlias(reference, aliasMatches, userPrompt) {
+  const promptText = normalizePrompt(userPrompt);
+  const promptTokens = new Set(tokenizeSubjectText(userPrompt));
+
+  return aliasMatches.some(group => {
+    const blockedIds = group.blockedReferenceIds || [];
+    if (!blockedIds.includes(reference.id)) return false;
+
+    const allowedTerms = group.blockedUnlessPrompt || [];
+    return !allowedTerms.some(term => termMatchesPrompt(term, promptText, promptTokens));
+  });
+}
+
+function getGenericSubjectTerms(userPrompt) {
+  const promptTokens = new Set(tokenizeSubjectText(userPrompt));
+  const terms = new Set();
+
+  getGenericAliasMatches(userPrompt).forEach(group => {
+    group.reference.forEach(term => terms.add(term));
   });
 
-  return scored
-    .sort((a, b) => b.score - a.score)
-    .map(item => item.reference)
-    .slice(0, max);
+  promptTokens.forEach(token => {
+    if (!["icon", "symbol", "asset", "chrome", "red", "silver", "metallic", "and", "the", "a", "an"].includes(token)) {
+      terms.add(token);
+    }
+  });
+
+  return [...terms];
+}
+
+function getReferenceSubjectTerms(userPrompt, assetCategory, conceptPlan = null) {
+  const text = normalizePrompt(userPrompt);
+  const promptTokens = new Set(tokenizeSubjectText(userPrompt));
+  const terms = new Set(getGenericSubjectTerms(userPrompt));
+
+  if (conceptPlan) {
+    [
+      conceptPlan.detectedConcept,
+      conceptPlan.literalSubject,
+      ...(conceptPlan.metaphorTerms || []),
+      ...(conceptPlan.searchedReferenceTerms || []),
+      ...(conceptPlan.preferredReferenceSubjects || [])
+    ].forEach(term => {
+      if (term) terms.add(term);
+    });
+  }
+
+  if (assetCategory === ASSET_CATEGORIES.GENERIC) {
+    if (/%/.test(text)) terms.add("percent");
+    if (/[$€£¥]/.test(text)) terms.add("currency");
+    if (/\bmail\b|\bemail\b|\benvelope\b/.test(text)) terms.add("mail");
+    if (/\bfolder\b|\bportfolio\b|\bfiles?\b/.test(text)) terms.add("portfolio");
+  }
+
+  if (assetCategory === ASSET_CATEGORIES.CRYPTO) {
+    if (/\bbtc\b|\bbitcoin\b/.test(text)) ["btc", "bitcoin"].forEach(term => terms.add(term));
+    if (/\beth\b|\bether\b|\bethereum\b/.test(text)) ["eth", "ethereum"].forEach(term => terms.add(term));
+    if (/\bsol\b|\bsolana\b/.test(text)) ["sol", "solana"].forEach(term => terms.add(term));
+    if (/\bxrp\b|\bripple\b/.test(text)) ["xrp", "ripple"].forEach(term => terms.add(term));
+    if (/\bdoge\b|\bdogecoin\b/.test(text)) ["doge", "dogecoin"].forEach(term => terms.add(term));
+  }
+
+  if (assetCategory === ASSET_CATEGORIES.PRODUCT_TILE) {
+    [
+      "instagram", "tiktok", "whatsapp", "youtube", "facebook", "linkedin",
+      "mt5", "metatrader", "ctrader", "dbot", "deriv", "options"
+    ].forEach(term => {
+      if (promptTokens.has(term)) terms.add(term);
+    });
+  }
+
+  if (assetCategory === ASSET_CATEGORIES.MARKET) {
+    [
+      "nvidia", "amazon", "amzn", "apple", "gold", "oil", "usoil", "eurusd",
+      "eur", "usd", "jpy", "us500", "wall", "stock", "market"
+    ].forEach(term => {
+      if (text.includes(term)) terms.add(term);
+    });
+  }
+
+  return [...terms].filter(Boolean);
+}
+
+function getReferenceFormProfile(reference) {
+  if (!reference || reference.category !== ASSET_CATEGORIES.GENERIC) return null;
+  return classifyGenericFormProfile(reference.subject_type || reference.id, reference).id;
+}
+
+function scoreGenericSubjectReference(reference, userPrompt, material) {
+  const terms = getGenericSubjectTerms(userPrompt);
+  if (!terms.length) return 0;
+
+  const aliasMatches = getGenericAliasMatches(userPrompt);
+  if (referenceBlockedByAlias(reference, aliasMatches, userPrompt)) return 0;
+
+  const referenceTokens = new Set(tokenizeSubjectText(getReferenceSearchText(reference)));
+  const referenceText = normalizeSubjectText(getReferenceSearchText(reference));
+  let score = 0;
+
+  aliasMatches.forEach(group => {
+    if ((group.preferredReferenceIds || []).includes(reference.id)) {
+      score += 1000;
+    }
+  });
+
+  terms.forEach(term => {
+    const normalized = normalizeSubjectText(term);
+    if (referenceTokens.has(term)) score += 40;
+    else if (normalized && referenceText.includes(normalized)) score += 24;
+  });
+
+  if (!score) return 0;
+  if (reference.material === material) score += 35;
+  if (reference.shape_type === "simple_icon") score += 8;
+  if (reference.shape_type === "numerical") score -= 20;
+  return score;
+}
+
+function buildReferenceScoreReason(parts) {
+  return parts.length ? parts.join("; ") : "Low-priority category archetype fallback.";
+}
+
+function scoreInternalReference(reference, context) {
+  const {
+    assetCategory,
+    material,
+    userPrompt,
+    formProfile,
+    conceptPlan
+  } = context;
+  const terms = getReferenceSubjectTerms(userPrompt, assetCategory, conceptPlan);
+  const aliasMatches = assetCategory === ASSET_CATEGORIES.GENERIC ? getGenericAliasMatches(userPrompt) : [];
+  const referenceTokens = new Set(tokenizeSubjectText(getReferenceSearchText(reference)));
+  const referenceText = normalizeSubjectText(getReferenceSearchText(reference));
+  const reasons = [];
+  let score = 0;
+  let subjectScore = 0;
+
+  if (reference.category === assetCategory) {
+    score += 150;
+    reasons.push("asset category match");
+  } else {
+    score -= 80;
+  }
+
+  if (reference.material === material) {
+    score += 120;
+    reasons.push("material/color behavior match");
+  }
+
+  if (assetCategory === ASSET_CATEGORIES.GENERIC && referenceBlockedByAlias(reference, aliasMatches, userPrompt)) {
+    return {
+      reference,
+      score: 0,
+      subjectScore: 0,
+      reason: "Blocked by manual alias guard."
+    };
+  }
+
+  if (
+    conceptPlan?.blockedReferenceSubjectsUnlessLiteral?.length &&
+    !conceptPlan.blockedReferenceSubjectsUnlessLiteral.some(term => termMatchesPrompt(term, normalizePrompt(userPrompt), new Set(tokenizeSubjectText(userPrompt))))
+  ) {
+    const blocked = conceptPlan.blockedReferenceSubjectsUnlessLiteral.some(term => referenceText.includes(normalizeSubjectText(term)));
+    if (blocked) {
+      return {
+        reference,
+        score: 0,
+        subjectScore: 0,
+        reason: "Blocked by concept/metaphor guard."
+      };
+    }
+  }
+
+  aliasMatches.forEach(group => {
+    if ((group.preferredReferenceIds || []).includes(reference.id)) {
+      score += 1000;
+      subjectScore += 1000;
+      reasons.push(`exact manual alias match: ${group.id}`);
+    }
+  });
+
+  (conceptPlan?.preferredReferenceSubjects || []).forEach(term => {
+    const normalized = normalizeSubjectText(term);
+    if (!normalized) return;
+    if (referenceTokens.has(term) || referenceText.includes(normalized)) {
+      score += 260;
+      subjectScore += 260;
+      reasons.push(`strong metaphor match: ${term}`);
+    }
+  });
+
+  terms.forEach(term => {
+    const normalized = normalizeSubjectText(term);
+    if (!normalized) return;
+    if (referenceTokens.has(term)) {
+      score += 90;
+      subjectScore += 90;
+      reasons.push(`filename/subject token match: ${term}`);
+    } else if (referenceText.includes(normalized)) {
+      score += 60;
+      subjectScore += 60;
+      reasons.push(`filename/subject partial match: ${term}`);
+    }
+  });
+
+  if (assetCategory === ASSET_CATEGORIES.GENERIC && formProfile) {
+    const referenceFormProfile = getReferenceFormProfile(reference);
+    if (referenceFormProfile && referenceFormProfile === formProfile.id) {
+      score += 75;
+      reasons.push(`formProfile match: ${formProfile.id}`);
+    }
+  }
+
+  if (reference.angle_id) {
+    score += 20;
+    reasons.push("angle compatibility metadata available");
+  }
+
+  if (reference.category === assetCategory && subjectScore === 0) {
+    score += 15;
+    reasons.push("category archetype fallback");
+  }
+
+  if (reference.shape_type === "numerical" && !extractExactContentTokens(userPrompt).length) {
+    score -= 35;
+    reasons.push("reduced numerical leak risk");
+  }
+
+  return {
+    reference,
+    score,
+    subjectScore,
+    reason: buildReferenceScoreReason([...new Set(reasons)])
+  };
+}
+
+function decorateReference(reference, role, retrieval) {
+  return {
+    ...reference,
+    reference_role: role,
+    reference_roles: role === REFERENCE_ROLES.SUBJECT_ARCHETYPE
+      ? [REFERENCE_ROLES.SUBJECT_ARCHETYPE, REFERENCE_ROLES.STYLE_ARCHETYPE]
+      : [role],
+    reference_score: retrieval.score,
+    reference_reason: retrieval.reason
+  };
+}
+
+function findGenericSubjectReference(references, { assetCategory, material, userPrompt }) {
+  if (assetCategory !== ASSET_CATEGORIES.GENERIC) return null;
+  if (extractExactContentTokens(userPrompt).length) return null;
+
+  const candidates = references
+    .filter(reference => reference.category === ASSET_CATEGORIES.GENERIC)
+    .map(reference => ({
+      reference,
+      score: scoreGenericSubjectReference(reference, userPrompt, material)
+    }))
+    .filter(item => item.score >= 40)
+    .sort((a, b) => b.score - a.score);
+
+  return candidates[0]?.reference || null;
+}
+
+function selectStyleReferences({ assetCategory, material, userPrompt = "", formProfile = null, conceptPlan = null, max = 3 }) {
+  const registry = loadReferenceRegistry();
+  const references = Array.isArray(registry.references) ? registry.references : [];
+  const exactTokens = assetCategory === ASSET_CATEGORIES.GENERIC
+    ? extractExactContentTokens(userPrompt)
+    : [];
+  const context = { assetCategory, material, userPrompt, formProfile, conceptPlan };
+  const scored = references
+    .map(reference => scoreInternalReference(reference, context))
+    .filter(item => item.score > 0)
+    .sort((a, b) => b.score - a.score);
+  const categoryScored = scored.filter(item => item.reference.category === assetCategory);
+
+  if (!categoryScored.length) return [];
+
+  const primary = categoryScored[0];
+  const isCloseSubject = !exactTokens.length && primary.subjectScore >= 60;
+  const primaryRole = isCloseSubject
+    ? REFERENCE_ROLES.SUBJECT_ARCHETYPE
+    : REFERENCE_ROLES.STYLE_ARCHETYPE;
+  const selected = [decorateReference(primary.reference, primaryRole, primary)];
+
+  const needsMaterialReference = primary.reference.material !== material;
+  if (needsMaterialReference && selected.length < Math.min(max, 2)) {
+    const materialCandidate = categoryScored.find(item =>
+      item.reference.id !== primary.reference.id &&
+      item.reference.material === material &&
+      item.reference.shape_type !== "numerical"
+    ) || categoryScored.find(item =>
+      item.reference.id !== primary.reference.id &&
+      item.reference.material === material
+    );
+
+    if (materialCandidate) {
+      selected.push(decorateReference(materialCandidate.reference, REFERENCE_ROLES.MATERIAL, materialCandidate));
+    }
+  }
+
+  return selected.slice(0, Math.min(max, 2));
 }
 
 function getFeatureModule(modules, feature) {
@@ -389,19 +1151,108 @@ function getFeatureModule(modules, feature) {
   return modules[featureKey];
 }
 
+function applyConceptMaterialPreference(materialPlan, conceptPlan, assetCategory) {
+  const isExplicit = /^Explicit user material request/.test(materialPlan.reason);
+  if (
+    assetCategory === ASSET_CATEGORIES.GENERIC &&
+    conceptPlan?.preferredMaterialBehavior &&
+    !isExplicit &&
+    materialPlan.material !== conceptPlan.preferredMaterialBehavior
+  ) {
+    return {
+      material: conceptPlan.preferredMaterialBehavior,
+      reason: `Auto-selected ${conceptPlan.preferredMaterialBehavior} from concept/metaphor resolver for ${conceptPlan.detectedConcept}.`
+    };
+  }
+  return materialPlan;
+}
+
+function buildConceptFormProfile(conceptPlan, fallbackProfile) {
+  if (conceptPlan?.preferredFormProfile && conceptPlan.detectedConcept !== "literal_glyph") {
+    return {
+      id: conceptPlan.preferredFormProfile,
+      reason: `Concept/metaphor resolver selected ${conceptPlan.preferredFormProfile} for ${conceptPlan.detectedConcept}.`
+    };
+  }
+  return fallbackProfile;
+}
+
 function buildPrompt({ feature, userPrompt, selectedAngleId }) {
   const modules = loadPromptModules();
   const assetCategory = classifyAssetCategory(userPrompt);
-  const material = classifyMaterial(userPrompt, assetCategory);
+  const conceptPlan = resolvePromptConcept(userPrompt, assetCategory);
+  const materialPlan = applyConceptMaterialPreference(
+    classifyMaterialWithReason(userPrompt, assetCategory),
+    conceptPlan,
+    assetCategory
+  );
+  const material = materialPlan.material;
   const selectedAngle = getAngleById(selectedAngleId);
-  const selectedReferences = selectStyleReferences({ assetCategory, material, userPrompt });
+  const initialFormProfile = assetCategory === ASSET_CATEGORIES.GENERIC
+    ? buildConceptFormProfile(conceptPlan, classifyGenericFormProfile(userPrompt, null))
+    : null;
+  const selectedReferences = selectStyleReferences({
+    assetCategory,
+    material,
+    userPrompt,
+    formProfile: initialFormProfile,
+    conceptPlan
+  });
+  const matchedSubjectReference = getMatchedSubjectReference(selectedReferences);
+  const selectedStyleReferences = selectedReferences.filter(reference => reference.reference_role !== REFERENCE_ROLES.SUBJECT_ARCHETYPE);
+  const formProfile = assetCategory === ASSET_CATEGORIES.GENERIC
+    ? buildConceptFormProfile(conceptPlan, classifyGenericFormProfile(userPrompt, matchedSubjectReference))
+    : null;
+  const primaryReference = selectedReferences[0] || null;
+  const debugMetadata = {
+    detectedAssetCategory: assetCategory,
+    detectedMaterial: material,
+    detectedConcept: conceptPlan.detectedConcept,
+    literalSubject: conceptPlan.literalSubject,
+    metaphorTerms: conceptPlan.metaphorTerms,
+    searchedReferenceTerms: conceptPlan.searchedReferenceTerms,
+    autoSelectedMaterial: assetCategory === ASSET_CATEGORIES.GENERIC ? material : null,
+    materialSelectionReason: materialPlan.reason,
+    genericFormProfile: formProfile?.id || null,
+    formProfile: formProfile?.id || null,
+    selectedPrimaryReference: primaryReference ? {
+      id: primaryReference.id,
+      path: primaryReference.path,
+      role: primaryReference.reference_role,
+      score: primaryReference.reference_score,
+      reason: primaryReference.reference_reason
+    } : null,
+    selectedReferenceReason: primaryReference?.reference_reason || null,
+    selectedReferenceRole: primaryReference?.reference_role || null,
+    selectedReferenceScore: primaryReference?.reference_score || null,
+    fallbackUsed: Boolean(conceptPlan.fallbackUsed || !primaryReference || primaryReference.reference_score < 60),
+    primarySubjectReference: matchedSubjectReference ? {
+      id: matchedSubjectReference.id,
+      path: matchedSubjectReference.path,
+      subject: matchedSubjectReference.subject_type,
+      shape_type: matchedSubjectReference.shape_type,
+      material: matchedSubjectReference.material,
+      role: matchedSubjectReference.reference_role,
+      score: matchedSubjectReference.reference_score,
+      reason: matchedSubjectReference.reference_reason
+    } : null,
+    subjectReferenceMode: Boolean(matchedSubjectReference),
+    selectedReferenceIds: selectedReferences.map(reference => reference.id),
+    selectedReferenceRoles: selectedReferences.map(reference => reference.reference_role),
+    selectedAngleId: selectedAngle?.id || selectedAngleId,
+    selectedAnglePath: selectedAngle?.path || null,
+    attachedReferenceOrder: [
+      `${REFERENCE_ROLES.ANGLE}:${selectedAngle?.path || selectedAngleId}`,
+      ...selectedReferences.map(reference => `${reference.reference_role}:${reference.path}`)
+    ]
+  };
 
   if (!selectedAngle) {
     throw new Error("Angle registry does not contain a center fallback angle.");
   }
 
   const colorMaterialRule = buildColorMaterialRule(assetCategory, material, userPrompt, modules);
-  const presetInstruction = getPresetInstruction(modules, assetCategory, userPrompt, colorMaterialRule);
+  const presetInstruction = getPresetInstruction(modules, assetCategory, userPrompt, colorMaterialRule, { formProfile, matchedSubjectReference });
   const exactGlyphLock = assetCategory === ASSET_CATEGORIES.GENERIC ? buildSubjectLockBlock(userPrompt, assetCategory) : "";
 
   const finalPrompt = [
@@ -411,18 +1262,32 @@ function buildPrompt({ feature, userPrompt, selectedAngleId }) {
     "Category:",
     assetCategory,
     "",
+    ...(assetCategory === ASSET_CATEGORIES.GENERIC ? [
+      "auto-selected material:",
+      material,
+      "Reason:",
+      materialPlan.reason,
+      "Form profile:",
+      formProfile.id,
+      "Form reason:",
+      formProfile.reason,
+      ""
+    ] : []),
     "Preset instruction:",
     presetInstruction,
     "",
     "Color/material rule:",
     colorMaterialRule,
     "",
+    "Reference retrieval:",
+    buildReferenceRetrievalBlock(selectedReferences, selectedAngle, conceptPlan),
+    "",
     ...(exactGlyphLock ? ["Exact glyph lock:", exactGlyphLock, ""] : []),
     "Angle instruction:",
     buildAngleInstruction(selectedAngle),
     "",
     "Reference role instruction:",
-    modules.reference_role_instruction,
+    buildReferenceRoleInstruction(modules, matchedSubjectReference, formProfile),
     "",
     "Shadow/output rule:",
     modules.shadow_output_rule,
@@ -436,8 +1301,16 @@ function buildPrompt({ feature, userPrompt, selectedAngleId }) {
     userPrompt,
     assetCategory,
     material,
+    materialReason: materialPlan.reason,
+    formProfile: formProfile?.id || null,
+    formProfileReason: formProfile?.reason || null,
+    subjectReferenceMode: Boolean(matchedSubjectReference),
+    matchedSubjectReference,
+    primarySubjectReference: matchedSubjectReference,
+    selectedStyleReferences,
     selectedAngle,
     selectedReferences,
+    debugMetadata,
     finalPrompt
   };
 }
