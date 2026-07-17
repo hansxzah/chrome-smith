@@ -405,6 +405,79 @@ function serveStaticFile(requestUrl, response, allowedDirectory = "reference-lib
   fs.createReadStream(filePath).pipe(response);
 }
 
+function isLocalhostRequest(request) {
+  const remoteAddress = request.socket?.remoteAddress || "";
+  const host = String(request.headers.host || "").split(":")[0].toLowerCase();
+  return ["127.0.0.1", "::1", "::ffff:127.0.0.1", "localhost"].includes(remoteAddress) ||
+    ["127.0.0.1", "::1", "localhost"].includes(host);
+}
+
+function buildGenerateDebugPayload({
+  promptPlan,
+  selectedAngleId,
+  selectedAngleLabel = null,
+  resolution,
+  referenceImages,
+  generatedImageResponseStatus = "pending"
+}) {
+  const safeDebug = {
+    clientSelectedAngleId: selectedAngleId,
+    clientSelectedAngleLabel: typeof selectedAngleLabel === "string" ? selectedAngleLabel : null,
+    resolution,
+    resolvedSelectedAngleId: promptPlan.selectedAngle.id,
+    resolvedSelectedAngleLabel: promptPlan.selectedAngle.label,
+    assetCategory: promptPlan.assetCategory,
+    material: promptPlan.material,
+    autoSelectedMaterial: promptPlan.debugMetadata?.autoSelectedMaterial,
+    materialSelectionReason: promptPlan.debugMetadata?.materialSelectionReason,
+    genericFormProfile: promptPlan.debugMetadata?.genericFormProfile,
+    formProfile: promptPlan.debugMetadata?.formProfile,
+    formReason: promptPlan.debugMetadata?.formReason,
+    detectedConcept: promptPlan.debugMetadata?.detectedConcept,
+    literalSubject: promptPlan.debugMetadata?.literalSubject,
+    visualMetaphors: promptPlan.debugMetadata?.visualMetaphors || [],
+    metaphorTerms: promptPlan.debugMetadata?.visualMetaphors || [],
+    searchedReferenceTerms: promptPlan.debugMetadata?.searchedReferenceTerms || [],
+    preferredReferenceSubjects: promptPlan.debugMetadata?.preferredReferenceSubjects || [],
+    plannerJSON: promptPlan.plannerJSON,
+    assetPlan: promptPlan.assetPlan,
+    selectedPrimaryReference: promptPlan.debugMetadata?.selectedPrimaryReference || null,
+    selectedPrimaryReferencePath: promptPlan.debugMetadata?.selectedPrimaryReferencePath || null,
+    selectedMaterialReference: promptPlan.debugMetadata?.selectedMaterialReference || null,
+    selectedReferenceReason: promptPlan.debugMetadata?.selectedReferenceReason,
+    selectedReferenceRole: promptPlan.debugMetadata?.selectedReferenceRole,
+    selectedReferenceScore: promptPlan.debugMetadata?.selectedReferenceScore,
+    fallbackUsed: promptPlan.debugMetadata?.fallbackUsed,
+    selectedReferenceIds: promptPlan.debugMetadata?.selectedReferenceIds || promptPlan.selectedReferences.map(reference => reference.id),
+    attachedReferenceOrder: promptPlan.debugMetadata?.attachedReferenceOrder || [],
+    selectedAngleReferencePath: promptPlan.selectedAngle.path,
+    selectedAngleReferenceAttached: true,
+    selectedStyleReferenceIds: promptPlan.selectedReferences.map(reference => reference.id),
+    selectedStyleReferencePaths: promptPlan.selectedReferences.map(reference => reference.path),
+    selectedStyleReferenceCount: promptPlan.selectedReferences.length,
+    attachedReferenceImageCount: referenceImages.length,
+    finalImagePrompt: promptPlan.finalImagePrompt,
+    finalPromptPreview: getPromptPreview(promptPlan.finalPrompt),
+    generatedImageResponseStatus
+  };
+
+  return {
+    promptBuilder: {
+      assetCategory: promptPlan.assetCategory,
+      material: promptPlan.material,
+      assetPlan: promptPlan.assetPlan,
+      plannerJSON: promptPlan.plannerJSON,
+      selectedAngle: promptPlan.selectedAngle,
+      selectedReferences: promptPlan.selectedReferences,
+      debugMetadata: promptPlan.debugMetadata,
+      finalPrompt: promptPlan.finalPrompt,
+      finalImagePrompt: promptPlan.finalImagePrompt,
+      debug: safeDebug
+    },
+    debug: safeDebug
+  };
+}
+
 const server = http.createServer(async (request, response) => {
   if (request.method === "OPTIONS") {
     response.writeHead(204, corsHeaders());
@@ -476,40 +549,21 @@ const server = http.createServer(async (request, response) => {
       const promptPlan = buildPrompt({
         feature: "generate",
         userPrompt: prompt.trim(),
-        selectedAngleId
+        selectedAngleId,
+        resolution,
+        transparentBackground
       });
       const selectedAngleReferencePath = getReferenceLibraryFilePath(promptPlan.selectedAngle.path);
       const selectedStyleReferencePaths = promptPlan.selectedReferences.map(reference => getReferenceLibraryFilePath(reference.path));
       const referenceImages = [selectedAngleReferencePath, ...selectedStyleReferencePaths];
-      safeDebug = {
-        ...safeDebug,
-        resolvedSelectedAngleId: promptPlan.selectedAngle.id,
-        resolvedSelectedAngleLabel: promptPlan.selectedAngle.label,
-        assetCategory: promptPlan.assetCategory,
-        material: promptPlan.material,
-        autoSelectedMaterial: promptPlan.debugMetadata?.autoSelectedMaterial,
-        materialSelectionReason: promptPlan.debugMetadata?.materialSelectionReason,
-        genericFormProfile: promptPlan.debugMetadata?.genericFormProfile,
-        formProfile: promptPlan.debugMetadata?.formProfile,
-        detectedConcept: promptPlan.debugMetadata?.detectedConcept,
-        literalSubject: promptPlan.debugMetadata?.literalSubject,
-        metaphorTerms: promptPlan.debugMetadata?.metaphorTerms || [],
-        searchedReferenceTerms: promptPlan.debugMetadata?.searchedReferenceTerms || [],
-        selectedPrimaryReference: promptPlan.debugMetadata?.selectedPrimaryReference || null,
-        selectedReferenceReason: promptPlan.debugMetadata?.selectedReferenceReason,
-        selectedReferenceRole: promptPlan.debugMetadata?.selectedReferenceRole,
-        selectedReferenceScore: promptPlan.debugMetadata?.selectedReferenceScore,
-        fallbackUsed: promptPlan.debugMetadata?.fallbackUsed,
-        selectedReferenceIds: promptPlan.debugMetadata?.selectedReferenceIds || promptPlan.selectedReferences.map(reference => reference.id),
-        attachedReferenceOrder: promptPlan.debugMetadata?.attachedReferenceOrder || [],
-        selectedAngleReferencePath: promptPlan.selectedAngle.path,
-        selectedAngleReferenceAttached: true,
-        selectedStyleReferenceIds: promptPlan.selectedReferences.map(reference => reference.id),
-        selectedStyleReferencePaths: promptPlan.selectedReferences.map(reference => reference.path),
-        selectedStyleReferenceCount: promptPlan.selectedReferences.length,
-        attachedReferenceImageCount: referenceImages.length,
-        finalPromptPreview: getPromptPreview(promptPlan.finalPrompt)
-      };
+      const debugPayload = buildGenerateDebugPayload({
+        promptPlan,
+        selectedAngleId,
+        selectedAngleLabel: debugMetadata.selectedAngleLabel,
+        resolution,
+        referenceImages
+      });
+      safeDebug = debugPayload.debug;
       console.log("Generate prompt builder:", {
         assetCategory: promptPlan.assetCategory,
         material: promptPlan.material,
@@ -542,15 +596,7 @@ const server = http.createServer(async (request, response) => {
         ...resolutionMetadata,
         transparentBackground,
         outputFormat: "png",
-        promptBuilder: {
-          assetCategory: promptPlan.assetCategory,
-          material: promptPlan.material,
-          selectedAngle: promptPlan.selectedAngle,
-          selectedReferences: promptPlan.selectedReferences,
-          debugMetadata: promptPlan.debugMetadata,
-          finalPrompt: promptPlan.finalPrompt,
-          debug: safeDebug
-        },
+        promptBuilder: debugPayload.promptBuilder,
         debug: safeDebug
       });
     } catch (error) {
@@ -591,51 +637,24 @@ const server = http.createServer(async (request, response) => {
       const promptPlan = buildPrompt({
         feature: "generate",
         userPrompt: prompt.trim(),
-        selectedAngleId
+        selectedAngleId,
+        resolution,
+        transparentBackground
       });
       const selectedAngleReferencePath = getReferenceLibraryFilePath(promptPlan.selectedAngle.path);
       const selectedStyleReferencePaths = promptPlan.selectedReferences.map(reference => getReferenceLibraryFilePath(reference.path));
       const referenceImages = [selectedAngleReferencePath, ...selectedStyleReferencePaths];
-      safeDebug = {
-        ...safeDebug,
-        resolvedSelectedAngleId: promptPlan.selectedAngle.id,
-        resolvedSelectedAngleLabel: promptPlan.selectedAngle.label,
-        assetCategory: promptPlan.assetCategory,
-        material: promptPlan.material,
-        autoSelectedMaterial: promptPlan.debugMetadata?.autoSelectedMaterial,
-        materialSelectionReason: promptPlan.debugMetadata?.materialSelectionReason,
-        genericFormProfile: promptPlan.debugMetadata?.genericFormProfile,
-        formProfile: promptPlan.debugMetadata?.formProfile,
-        detectedConcept: promptPlan.debugMetadata?.detectedConcept,
-        literalSubject: promptPlan.debugMetadata?.literalSubject,
-        metaphorTerms: promptPlan.debugMetadata?.metaphorTerms || [],
-        searchedReferenceTerms: promptPlan.debugMetadata?.searchedReferenceTerms || [],
-        selectedPrimaryReference: promptPlan.debugMetadata?.selectedPrimaryReference || null,
-        selectedReferenceReason: promptPlan.debugMetadata?.selectedReferenceReason,
-        selectedReferenceRole: promptPlan.debugMetadata?.selectedReferenceRole,
-        selectedReferenceScore: promptPlan.debugMetadata?.selectedReferenceScore,
-        fallbackUsed: promptPlan.debugMetadata?.fallbackUsed,
-        selectedReferenceIds: promptPlan.debugMetadata?.selectedReferenceIds || promptPlan.selectedReferences.map(reference => reference.id),
-        attachedReferenceOrder: promptPlan.debugMetadata?.attachedReferenceOrder || [],
-        selectedAngleReferencePath: promptPlan.selectedAngle.path,
-        selectedAngleReferenceAttached: true,
-        selectedStyleReferenceIds: promptPlan.selectedReferences.map(reference => reference.id),
-        selectedStyleReferencePaths: promptPlan.selectedReferences.map(reference => reference.path),
-        selectedStyleReferenceCount: promptPlan.selectedReferences.length,
-        attachedReferenceImageCount: referenceImages.length,
-        finalPromptPreview: getPromptPreview(promptPlan.finalPrompt)
-      };
+      const debugPayload = buildGenerateDebugPayload({
+        promptPlan,
+        selectedAngleId,
+        selectedAngleLabel: debugMetadata.selectedAngleLabel,
+        resolution,
+        referenceImages
+      });
+      safeDebug = debugPayload.debug;
       json(response, 200, {
         ok: true,
-        promptBuilder: {
-          assetCategory: promptPlan.assetCategory,
-          material: promptPlan.material,
-          selectedAngle: promptPlan.selectedAngle,
-          selectedReferences: promptPlan.selectedReferences,
-          debugMetadata: promptPlan.debugMetadata,
-          finalPrompt: promptPlan.finalPrompt,
-          debug: safeDebug
-        },
+        promptBuilder: debugPayload.promptBuilder,
         debug: safeDebug
       });
     } catch (error) {
@@ -648,6 +667,92 @@ const server = http.createServer(async (request, response) => {
         ok: false,
         error: true,
         message: error.message || "Generate debug preview failed.",
+        debug
+      });
+    }
+    return;
+  }
+
+  if (request.method === "POST" && new URL(request.url, "http://localhost").pathname === "/api/generate/smoke-debug") {
+    if (!isLocalhostRequest(request)) {
+      json(response, 403, {
+        ok: false,
+        error: true,
+        message: "Smoke debug route is localhost-only."
+      });
+      return;
+    }
+
+    let safeDebug = {};
+    try {
+      const { prompt, selectedAngleId = "angle_center", resolution = "1K", transparentBackground = true, debugMetadata = {} } = await readJson(request);
+      safeDebug = {
+        clientSelectedAngleId: selectedAngleId,
+        clientSelectedAngleLabel: typeof debugMetadata.selectedAngleLabel === "string" ? debugMetadata.selectedAngleLabel : null,
+        resolution
+      };
+      if (typeof prompt !== "string" || !prompt.trim()) {
+        json(response, 400, { ok: false, error: true, message: "Enter a prompt before smoke debugging.", debug: safeDebug });
+        return;
+      }
+      const resolutionMetadata = getResolutionMetadata(resolution);
+      if (typeof transparentBackground !== "boolean") {
+        json(response, 400, { ok: false, error: true, message: "Transparent background must be enabled or disabled.", debug: safeDebug });
+        return;
+      }
+      const promptPlan = buildPrompt({
+        feature: "generate",
+        userPrompt: prompt.trim(),
+        selectedAngleId,
+        resolution,
+        transparentBackground
+      });
+      const selectedAngleReferencePath = getReferenceLibraryFilePath(promptPlan.selectedAngle.path);
+      const selectedStyleReferencePaths = promptPlan.selectedReferences.map(reference => getReferenceLibraryFilePath(reference.path));
+      const referenceImages = [selectedAngleReferencePath, ...selectedStyleReferencePaths];
+      const debugPayload = buildGenerateDebugPayload({
+        promptPlan,
+        selectedAngleId,
+        selectedAngleLabel: debugMetadata.selectedAngleLabel,
+        resolution,
+        referenceImages,
+        generatedImageResponseStatus: "mock-not-sent"
+      });
+      safeDebug = debugPayload.debug;
+      json(response, 200, {
+        ok: true,
+        smokeDebug: true,
+        localhostOnly: true,
+        mockOnly: true,
+        route: "/api/generate/smoke-debug",
+        plannerJSON: promptPlan.plannerJSON,
+        selectedReferences: promptPlan.selectedReferences,
+        selectedAngleReference: {
+          id: promptPlan.selectedAngle.id,
+          label: promptPlan.selectedAngle.label,
+          path: promptPlan.selectedAngle.path
+        },
+        attachedReferenceOrder: safeDebug.attachedReferenceOrder,
+        finalImagePrompt: promptPlan.finalImagePrompt,
+        fakeImageResponseStatus: {
+          upstreamStatus: "mock-not-sent",
+          upstreamContentType: "mock/debug-only",
+          imageExtracted: false,
+          imageSourceType: "mock",
+          apiRequestSent: false,
+          historySaved: false
+        }
+      });
+    } catch (error) {
+      const debug = {
+        ...safeDebug,
+        ...(error.debug || {}),
+        messagePreview: truncateText(error.message)
+      };
+      json(response, 502, {
+        ok: false,
+        error: true,
+        message: error.message || "Generate smoke debug failed.",
         debug
       });
     }

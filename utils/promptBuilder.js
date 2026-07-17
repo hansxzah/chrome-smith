@@ -1177,8 +1177,22 @@ function buildConceptFormProfile(conceptPlan, fallbackProfile) {
   return fallbackProfile;
 }
 
-function buildPrompt({ feature, userPrompt, selectedAngleId }) {
-  const modules = loadPromptModules();
+function uniqueList(values) {
+  return [...new Set((values || []).filter(Boolean))];
+}
+
+function buildOutputRequirements(resolution = "1K", transparentBackground = true) {
+  return uniqueList([
+    transparentBackground ? "transparent PNG" : "PNG output",
+    "isolated centered asset",
+    "no floor shadow",
+    "no background",
+    "no external reflection",
+    `${resolution} final output`
+  ]);
+}
+
+function createAssetPlan({ userPrompt, selectedAngleId, resolution = "1K", transparentBackground = true }) {
   const assetCategory = classifyAssetCategory(userPrompt);
   const conceptPlan = resolvePromptConcept(userPrompt, assetCategory);
   const materialPlan = applyConceptMaterialPreference(
@@ -1187,34 +1201,147 @@ function buildPrompt({ feature, userPrompt, selectedAngleId }) {
     assetCategory
   );
   const material = materialPlan.material;
-  const selectedAngle = getAngleById(selectedAngleId);
-  const initialFormProfile = assetCategory === ASSET_CATEGORIES.GENERIC
+  const formProfile = assetCategory === ASSET_CATEGORIES.GENERIC
     ? buildConceptFormProfile(conceptPlan, classifyGenericFormProfile(userPrompt, null))
     : null;
-  const selectedReferences = selectStyleReferences({
+
+  const plan = {
+    subject: String(userPrompt || "").trim(),
+    literalSubject: conceptPlan.literalSubject || String(userPrompt || "").trim(),
+    detectedConcept: conceptPlan.detectedConcept || null,
     assetCategory,
     material,
-    userPrompt,
-    formProfile: initialFormProfile,
-    conceptPlan
-  });
-  const matchedSubjectReference = getMatchedSubjectReference(selectedReferences);
-  const selectedStyleReferences = selectedReferences.filter(reference => reference.reference_role !== REFERENCE_ROLES.SUBJECT_ARCHETYPE);
-  const formProfile = assetCategory === ASSET_CATEGORIES.GENERIC
-    ? buildConceptFormProfile(conceptPlan, classifyGenericFormProfile(userPrompt, matchedSubjectReference))
-    : null;
-  const primaryReference = selectedReferences[0] || null;
-  const debugMetadata = {
-    detectedAssetCategory: assetCategory,
-    detectedMaterial: material,
-    detectedConcept: conceptPlan.detectedConcept,
-    literalSubject: conceptPlan.literalSubject,
-    metaphorTerms: conceptPlan.metaphorTerms,
-    searchedReferenceTerms: conceptPlan.searchedReferenceTerms,
-    autoSelectedMaterial: assetCategory === ASSET_CATEGORIES.GENERIC ? material : null,
-    materialSelectionReason: materialPlan.reason,
-    genericFormProfile: formProfile?.id || null,
+    materialReason: materialPlan.reason,
     formProfile: formProfile?.id || null,
+    formReason: formProfile?.reason || "Category reference controls form profile.",
+    visualMetaphors: conceptPlan.metaphorTerms || [],
+    searchedReferenceTerms: conceptPlan.searchedReferenceTerms || [],
+    preferredReferenceSubjects: conceptPlan.preferredReferenceSubjects || [],
+    selectedAngleId,
+    outputRequirements: buildOutputRequirements(resolution, transparentBackground),
+    mustInclude: [],
+    mustAvoid: [],
+    plannerMetadata: {
+      fallbackUsed: Boolean(conceptPlan.fallbackUsed),
+      blockedReferenceSubjectsUnlessLiteral: conceptPlan.blockedReferenceSubjectsUnlessLiteral || []
+    }
+  };
+
+  plan.mustInclude = uniqueList([
+    "premium Chrome Smith 3D asset",
+    material === MATERIALS.RED_SILVER_CHROME ? "red and silver material balance" : "",
+    material === MATERIALS.PLAIN_RED_CHROME ? "red metallic chrome material" : "",
+    material === MATERIALS.PLAIN_CHROME ? "silver metallic chrome material" : "",
+    material === MATERIALS.MULTICOLORED_TILE ? "brand-colored smooth 3D tile body" : "",
+    material === MATERIALS.MULTICOLORED_COIN ? "token-colored 3D coin with readable face mark" : "",
+    plan.formProfile === "low_relief_object" ? "smooth planar construction" : "",
+    plan.formProfile === "simple_glyph_icon" ? "clear readable glyph silhouette" : "",
+    plan.formProfile === "realistic_3d_object" ? "object-like volumetric construction" : ""
+  ]);
+  plan.mustAvoid = uniqueList([
+    "basic outline icon",
+    "heavy bevel",
+    material !== MATERIALS.PLAIN_CHROME ? "plain silver only" : "",
+    "background",
+    "floor reflection",
+    "external shadow",
+    "copied reference subject",
+    assetCategory === ASSET_CATEGORIES.GENERIC && extractExactContentTokens(userPrompt).length ? "changed digits, symbols, letters, or punctuation" : ""
+  ]);
+
+  return plan;
+}
+
+function selectReferencesFromAssetPlan(assetPlan) {
+  const conceptPlan = {
+    detectedConcept: assetPlan.detectedConcept,
+    literalSubject: assetPlan.literalSubject,
+    metaphorTerms: assetPlan.visualMetaphors,
+    searchedReferenceTerms: assetPlan.searchedReferenceTerms,
+    preferredReferenceSubjects: assetPlan.preferredReferenceSubjects,
+    blockedReferenceSubjectsUnlessLiteral: assetPlan.plannerMetadata?.blockedReferenceSubjectsUnlessLiteral || []
+  };
+  const registry = loadReferenceRegistry();
+  const references = Array.isArray(registry.references) ? registry.references : [];
+  const context = {
+    assetCategory: assetPlan.assetCategory,
+    material: assetPlan.material,
+    userPrompt: assetPlan.subject,
+    formProfile: assetPlan.formProfile ? { id: assetPlan.formProfile, reason: assetPlan.formReason } : null,
+    conceptPlan
+  };
+  const scored = references
+    .map(reference => scoreInternalReference(reference, context))
+    .filter(item => item.score > 0 && item.reference.category === assetPlan.assetCategory)
+    .sort((a, b) => b.score - a.score);
+
+  if (!scored.length) return [];
+
+  const primary = scored[0];
+  const selected = [decorateReference(primary.reference, REFERENCE_ROLES.STYLE_ARCHETYPE, primary)];
+  const materialReference = primary.reference.material !== assetPlan.material
+    ? scored.find(item => item.reference.id !== primary.reference.id && item.reference.material === assetPlan.material)
+    : null;
+
+  if (materialReference) {
+    selected.push(decorateReference(materialReference.reference, REFERENCE_ROLES.MATERIAL, materialReference));
+  }
+
+  return selected;
+}
+
+function composeFinalImagePrompt(assetPlan, selectedAngle, selectedReferences) {
+  const primaryReference = selectedReferences[0] || null;
+  const materialReference = selectedReferences.find(reference => reference.reference_role === REFERENCE_ROLES.MATERIAL);
+  const exactTokens = assetPlan.assetCategory === ASSET_CATEGORIES.GENERIC ? extractExactContentTokens(assetPlan.subject) : [];
+  return [
+    `Create ${assetPlan.subject} as a premium Chrome Smith 3D asset.`,
+    "Use the selected internal reference as the visual archetype for style, material behavior, color balance, form language, complexity, edge treatment, and lighting.",
+    "Do not copy the reference exactly. Do not ignore the reference or replace it with a basic generic icon.",
+    `Primary style archetype reference: ${primaryReference?.path || "none"}.`,
+    materialReference ? `Optional material reference: ${materialReference.path}. Use it only for material/color polish.` : "",
+    `Material plan: ${assetPlan.material}. ${assetPlan.materialReason}`,
+    assetPlan.formProfile ? `Form plan: ${assetPlan.formProfile}. ${assetPlan.formReason}` : "",
+    assetPlan.mustInclude.length ? `Must include: ${assetPlan.mustInclude.join("; ")}.` : "",
+    exactTokens.length ? `Preserve exact literal content: ${exactTokens.join(", ")}.` : "",
+    `Use the selected angle reference as the only source of truth for camera angle: ${selectedAngle.id} (${selectedAngle.path}). Do not mirror, reverse, swap, or reinterpret left/right.`,
+    "Output isolated centered transparent PNG. No floor, no background, no external shadow, no reflection."
+  ].filter(Boolean).join("\n");
+}
+
+function buildPrompt({ feature, userPrompt, selectedAngleId, resolution = "1K", transparentBackground = true }) {
+  getFeatureModule(loadPromptModules(), feature);
+  const selectedAngle = getAngleById(selectedAngleId);
+
+  if (!selectedAngle) {
+    throw new Error("Angle registry does not contain a center fallback angle.");
+  }
+
+  const assetPlan = createAssetPlan({ userPrompt, selectedAngleId: selectedAngle.id, resolution, transparentBackground });
+  const selectedReferences = selectReferencesFromAssetPlan(assetPlan);
+  const primaryReference = selectedReferences[0] || null;
+  const materialReference = selectedReferences.find(reference => reference.reference_role === REFERENCE_ROLES.MATERIAL) || null;
+  const attachedReferenceOrder = [
+    `${REFERENCE_ROLES.ANGLE}:${selectedAngle.path}`,
+    ...selectedReferences.map(reference => `${reference.reference_role}:${reference.path}`)
+  ];
+  const finalPrompt = composeFinalImagePrompt(assetPlan, selectedAngle, selectedReferences);
+  const debugMetadata = {
+    promptPlanningStage: "Prompt Planner",
+    assetPlan,
+    plannerJSON: assetPlan,
+    detectedAssetCategory: assetPlan.assetCategory,
+    detectedMaterial: assetPlan.material,
+    detectedConcept: assetPlan.detectedConcept,
+    literalSubject: assetPlan.literalSubject,
+    visualMetaphors: assetPlan.visualMetaphors,
+    searchedReferenceTerms: assetPlan.searchedReferenceTerms,
+    preferredReferenceSubjects: assetPlan.preferredReferenceSubjects,
+    autoSelectedMaterial: assetPlan.assetCategory === ASSET_CATEGORIES.GENERIC ? assetPlan.material : null,
+    materialSelectionReason: assetPlan.materialReason,
+    genericFormProfile: assetPlan.formProfile,
+    formProfile: assetPlan.formProfile,
+    formReason: assetPlan.formReason,
     selectedPrimaryReference: primaryReference ? {
       id: primaryReference.id,
       path: primaryReference.path,
@@ -1222,96 +1349,46 @@ function buildPrompt({ feature, userPrompt, selectedAngleId }) {
       score: primaryReference.reference_score,
       reason: primaryReference.reference_reason
     } : null,
+    selectedMaterialReference: materialReference ? {
+      id: materialReference.id,
+      path: materialReference.path,
+      role: materialReference.reference_role,
+      score: materialReference.reference_score,
+      reason: materialReference.reference_reason
+    } : null,
     selectedReferenceReason: primaryReference?.reference_reason || null,
     selectedReferenceRole: primaryReference?.reference_role || null,
     selectedReferenceScore: primaryReference?.reference_score || null,
-    fallbackUsed: Boolean(conceptPlan.fallbackUsed || !primaryReference || primaryReference.reference_score < 60),
-    primarySubjectReference: matchedSubjectReference ? {
-      id: matchedSubjectReference.id,
-      path: matchedSubjectReference.path,
-      subject: matchedSubjectReference.subject_type,
-      shape_type: matchedSubjectReference.shape_type,
-      material: matchedSubjectReference.material,
-      role: matchedSubjectReference.reference_role,
-      score: matchedSubjectReference.reference_score,
-      reason: matchedSubjectReference.reference_reason
-    } : null,
-    subjectReferenceMode: Boolean(matchedSubjectReference),
+    fallbackUsed: Boolean(assetPlan.plannerMetadata?.fallbackUsed || !primaryReference),
     selectedReferenceIds: selectedReferences.map(reference => reference.id),
     selectedReferenceRoles: selectedReferences.map(reference => reference.reference_role),
-    selectedAngleId: selectedAngle?.id || selectedAngleId,
-    selectedAnglePath: selectedAngle?.path || null,
-    attachedReferenceOrder: [
-      `${REFERENCE_ROLES.ANGLE}:${selectedAngle?.path || selectedAngleId}`,
-      ...selectedReferences.map(reference => `${reference.reference_role}:${reference.path}`)
-    ]
+    selectedAngleId: selectedAngle.id,
+    selectedAnglePath: selectedAngle.path,
+    selectedPrimaryReferencePath: primaryReference?.path || null,
+    selectedAngleReferencePath: selectedAngle.path,
+    attachedReferenceOrder,
+    finalImagePrompt: finalPrompt
   };
-
-  if (!selectedAngle) {
-    throw new Error("Angle registry does not contain a center fallback angle.");
-  }
-
-  const colorMaterialRule = buildColorMaterialRule(assetCategory, material, userPrompt, modules);
-  const presetInstruction = getPresetInstruction(modules, assetCategory, userPrompt, colorMaterialRule, { formProfile, matchedSubjectReference });
-  const exactGlyphLock = assetCategory === ASSET_CATEGORIES.GENERIC ? buildSubjectLockBlock(userPrompt, assetCategory) : "";
-
-  const finalPrompt = [
-    "User request:",
-    userPrompt,
-    "",
-    "Category:",
-    assetCategory,
-    "",
-    ...(assetCategory === ASSET_CATEGORIES.GENERIC ? [
-      "auto-selected material:",
-      material,
-      "Reason:",
-      materialPlan.reason,
-      "Form profile:",
-      formProfile.id,
-      "Form reason:",
-      formProfile.reason,
-      ""
-    ] : []),
-    "Preset instruction:",
-    presetInstruction,
-    "",
-    "Color/material rule:",
-    colorMaterialRule,
-    "",
-    "Reference retrieval:",
-    buildReferenceRetrievalBlock(selectedReferences, selectedAngle, conceptPlan),
-    "",
-    ...(exactGlyphLock ? ["Exact glyph lock:", exactGlyphLock, ""] : []),
-    "Angle instruction:",
-    buildAngleInstruction(selectedAngle),
-    "",
-    "Reference role instruction:",
-    buildReferenceRoleInstruction(modules, matchedSubjectReference, formProfile),
-    "",
-    "Shadow/output rule:",
-    modules.shadow_output_rule,
-    "",
-    "Negative rules:",
-    buildNegativePresetRules()
-  ].join("\n");
 
   return {
     feature,
     userPrompt,
-    assetCategory,
-    material,
-    materialReason: materialPlan.reason,
-    formProfile: formProfile?.id || null,
-    formProfileReason: formProfile?.reason || null,
-    subjectReferenceMode: Boolean(matchedSubjectReference),
-    matchedSubjectReference,
-    primarySubjectReference: matchedSubjectReference,
-    selectedStyleReferences,
+    assetPlan,
+    plannerJSON: assetPlan,
+    assetCategory: assetPlan.assetCategory,
+    material: assetPlan.material,
+    materialReason: assetPlan.materialReason,
+    formProfile: assetPlan.formProfile,
+    formProfileReason: assetPlan.formReason,
+    subjectReferenceMode: Boolean(primaryReference),
+    matchedSubjectReference: primaryReference,
+    primarySubjectReference: primaryReference,
+    selectedStyleReferences: selectedReferences.filter(reference => reference.reference_role !== REFERENCE_ROLES.MATERIAL),
     selectedAngle,
     selectedReferences,
     debugMetadata,
-    finalPrompt
+    finalPrompt,
+    finalImagePrompt: finalPrompt
   };
 }
 
@@ -1323,5 +1400,8 @@ module.exports = {
   classifyMaterial,
   getAngleById,
   selectStyleReferences,
+  createAssetPlan,
+  selectReferencesFromAssetPlan,
+  composeFinalImagePrompt,
   buildPrompt
 };

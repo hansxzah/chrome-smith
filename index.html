@@ -324,7 +324,8 @@
           <div class="debug-body">
             <div class="debug-grid" data-debug-fields></div>
             <div><div class="card-title">Reference attachment order</div><div class="debug-refs" data-debug-refs></div></div>
-            <div><div class="card-title">Final prompt sent to image API</div><pre class="debug-prompt" data-debug-prompt></pre></div>
+            <div><div class="card-title">Planner JSON asset plan</div><pre class="debug-prompt" data-debug-plan></pre></div>
+            <div><div class="card-title">Final image prompt sent to image API</div><pre class="debug-prompt" data-debug-prompt></pre></div>
           </div>
         </details>
         <div class="card history-card context-history" data-history-scope="generate"><div class="history-head"><div><div class="history-title"><i class="ti ti-sparkles"></i> Generate History</div><div class="history-count" data-history-count>0 assets</div></div></div><div class="library-toolbar"><div class="library-actions"><button class="bulk-btn" data-download-selected disabled><i class="ti ti-download"></i> Download Selected</button><button class="bulk-btn" data-delete-selected disabled><i class="ti ti-trash"></i> Delete Selected</button><button class="bulk-btn" data-clear-broken disabled>Clear Broken History</button><button class="bulk-btn" data-clear-scope disabled>Clear Generate History</button></div></div><div class="history-grid" data-history-grid></div></div>
@@ -534,10 +535,12 @@
       const fields = panel.querySelector("[data-debug-fields]");
       const refs = panel.querySelector("[data-debug-refs]");
       const prompt = panel.querySelector("[data-debug-prompt]");
+      const plan = panel.querySelector("[data-debug-plan]");
       fields.innerHTML = "";
       refs.innerHTML = "";
       const promptBuilder = data.promptBuilder || {};
       const debug = { ...(data.debug || {}), ...(promptBuilder.debug || {}), ...(promptBuilder.debugMetadata || {}) };
+      const plannerJSON = promptBuilder.plannerJSON || promptBuilder.assetPlan || debug.plannerJSON || debug.assetPlan || {};
       const selectedAngle = promptBuilder.selectedAngle || {};
       const selectedReferences = Array.isArray(promptBuilder.selectedReferences) ? promptBuilder.selectedReferences : [];
       const primaryReference = debug.selectedPrimaryReference || selectedReferences[0] || {};
@@ -546,7 +549,8 @@
         ...selectedReferences.map(reference => `${reference.reference_role || "reference"}:${reference.path}`)
       ].filter(Boolean);
 
-      addDebugField(fields, "User prompt", requestInfo.prompt);
+      addDebugField(fields, "raw user prompt", requestInfo.prompt);
+      addDebugField(fields, "planner JSON summary", plannerJSON);
       addDebugField(fields, "selectedAngleId", requestInfo.selectedAngleId || debug.clientSelectedAngleId || debug.resolvedSelectedAngleId);
       addDebugField(fields, "Selected angle label", requestInfo.selectedAngleLabel || debug.clientSelectedAngleLabel);
       addDebugField(fields, "Official angle label", selectedAngle.label || debug.resolvedSelectedAngleLabel);
@@ -556,16 +560,19 @@
       addDebugField(fields, "genericFormProfile / formProfile", debug.genericFormProfile || debug.formProfile);
       addDebugField(fields, "detectedConcept", debug.detectedConcept);
       addDebugField(fields, "literalSubject", debug.literalSubject);
-      addDebugField(fields, "metaphorTerms", debug.metaphorTerms);
+      addDebugField(fields, "visualMetaphors", debug.visualMetaphors || debug.metaphorTerms);
       addDebugField(fields, "searchedReferenceTerms", debug.searchedReferenceTerms);
+      addDebugField(fields, "preferredReferenceSubjects", debug.preferredReferenceSubjects);
       addDebugField(fields, "selected primary reference id", primaryReference.id);
-      addDebugField(fields, "selected primary reference path", primaryReference.path);
+      addDebugField(fields, "selected primary reference path", debug.selectedPrimaryReferencePath || primaryReference.path);
+      addDebugField(fields, "selected angle reference path", debug.selectedAngleReferencePath || selectedAngle.path);
       addDebugField(fields, "selectedReferenceReason", debug.selectedReferenceReason || primaryReference.reason || primaryReference.reference_reason);
       addDebugField(fields, "selectedReferenceRole", debug.selectedReferenceRole || primaryReference.role || primaryReference.reference_role);
       addDebugField(fields, "selectedReferenceScore", debug.selectedReferenceScore || primaryReference.score || primaryReference.reference_score);
       addDebugField(fields, "fallbackUsed", debug.fallbackUsed);
       addDebugField(fields, "selectedReferenceIds", debug.selectedReferenceIds || selectedReferences.map(reference => reference.id));
       addDebugField(fields, "attachedReferenceOrder", attachedReferenceOrder);
+      addDebugField(fields, "generated image response status", debug.upstreamStatus || "pending");
 
       addDebugReference(refs, `Angle reference: ${selectedAngle.label || requestInfo.selectedAngleLabel || "selected angle"}`, selectedAngle.path || debug.selectedAngleReferencePath, selectedAngle.id || requestInfo.selectedAngleId);
       selectedReferences.forEach((reference, index) => {
@@ -577,7 +584,8 @@
         );
       });
 
-      prompt.textContent = promptBuilder.finalPrompt || debug.finalPrompt || debug.finalPromptPreview || "";
+      if (plan) plan.textContent = JSON.stringify(plannerJSON, null, 2);
+      prompt.textContent = promptBuilder.finalImagePrompt || promptBuilder.finalPrompt || debug.finalImagePrompt || debug.finalPrompt || debug.finalPromptPreview || "";
       panel.classList.add("show");
       panel.open = true;
       console.debug("Chrome Smith Generate debug preview:", {
